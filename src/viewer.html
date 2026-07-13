@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GPT Knowledge Base</title>
+    <link rel="stylesheet" href="viewer.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <header class="sidebar-header">
+          <div class="brand-block">
+            <img class="brand-icon" src="../assets/gpt-vault-icon.svg" alt="" aria-hidden="true">
+            <div>
+              <p id="appKicker" class="app-kicker">Cross-platform live backup</p>
+              <h1 id="appTitle">GPT Knowledge Base</h1>
+            </div>
+          </div>
+          <div>
+            <p id="statusText">Loading backups</p>
+          </div>
+        </header>
+
+        <section class="source-controls" aria-label="Backup sources">
+          <button id="chooseFolderButton" class="primary" type="button">Choose Folder</button>
+          <button id="clearFolderButton" type="button">Clear Folder</button>
+          <button id="exportAllJsonButton" type="button">Export all JSON</button>
+          <button id="exportAllMarkdownButton" type="button">Export all Markdown</button>
+          <button id="clearAllButton" class="danger source-wide" type="button">Clear local backups</button>
+          <input id="folderFallbackInput" type="file" accept=".json,.md,.markdown,application/json,text/markdown" webkitdirectory multiple hidden>
+        </section>
+
+        <section class="search-box" aria-label="Search">
+          <input id="searchInput" type="search" placeholder="Search backups" autocomplete="off">
+        </section>
+
+        <section class="summary-grid" aria-label="Summary">
+          <div>
+            <span id="conversationCount">0</span>
+            <small id="conversationCountLabel">conversations</small>
+          </div>
+          <div>
+            <span id="messageCount">0</span>
+            <small id="messageCountLabel">messages</small>
+          </div>
+        </section>
+
+        <nav class="folder-nav" aria-label="Folders">
+          <ul id="folderList"></ul>
+        </nav>
+
+        <section class="conversation-panel" aria-label="Conversations">
+          <ul id="conversationList" class="conversation-list"></ul>
+        </section>
+      </aside>
+
+      <main class="reader">
+        <div class="reader-viewport">
+          <header class="reader-header">
+            <div class="reader-title-block">
+              <div class="meta-row">
+                <span id="sourceBadge" class="source-badge">No source</span>
+                <span id="folderBadge" class="folder-badge">No folder</span>
+              </div>
+              <h2 id="conversationTitle">Select a backup</h2>
+              <p id="conversationMeta">Choose chat backups from the left; selected conversations can become RAG knowledge-base material.</p>
+            </div>
+            <div class="reader-actions">
+              <div class="settings-toolbar" aria-label="Interface settings">
+                <label class="icon-select" title="Language">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+                  <span id="languageLabel" class="sr-only">Language</span>
+                  <select id="languageSelect"></select>
+                </label>
+                <label class="icon-select" title="Font">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/></svg>
+                  <span id="fontLabel" class="sr-only">Font</span>
+                  <select id="fontSelect"></select>
+                </label>
+                <label class="icon-select" title="Theme">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.2 2 11.4 2 15.7 5.4 20 10 20h1.6c1.1 0 1.8-.9 1.6-1.9-.1-.5-.2-.9-.2-1.2 0-1.1.9-1.9 2-1.9h1.6c3.1 0 5.4-2.5 5.4-5.5C22 5.4 17.5 2 12 2Z"/></svg>
+                  <span id="themeLabel" class="sr-only">Theme</span>
+                  <select id="themeSelect"></select>
+                </label>
+              </div>
+              <button id="openSourceButton" type="button">Open Source</button>
+              <button id="exportMarkdownButton" type="button">Export MD</button>
+              <button id="exportJsonButton" type="button">Export JSON</button>
+              <button id="deleteConversationButton" class="danger" type="button">Delete</button>
+            </div>
+          </header>
+
+          <section id="messageList" class="message-list" aria-label="Messages"></section>
+          <nav id="userProgress" class="user-progress" aria-label="User questions"></nav>
+          <section id="emptyState" class="empty-state">
+            <h3>No backup selected</h3>
+            <p>Open a supported AI chat page, or choose a local backup folder containing exported JSON or Markdown files for RAG knowledge-base preparation.</p>
+          </section>
+        </div>
+
+        <footer class="supported-footer" aria-labelledby="supportedPlatformsTitle">
+          <div class="supported-footer-copy">
+            <h3 id="supportedPlatformsTitle">Supported GPTs</h3>
+            <p id="compatibilityNotice">Compatibility: ChatGPT, Claude, Gemini, and Kimi are fully adapted; Doubao captures relatively complete data but cannot be faithfully reconstructed; DeepSeek currently captures model-side information only.</p>
+            <p id="trademarkNotice">Names and logos are used only as nominative links; trademarks belong to their owners.</p>
+          </div>
+          <div id="supportedPlatformList" class="supported-platform-list" aria-label="Supported GPT official links"></div>
+        </footer>
+      </main>
+    </div>
+
+    <script src="preferences.js"></script>
+    <script src="viewer.js"></script>
+  </body>
+</html>

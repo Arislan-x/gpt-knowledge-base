@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="GPT Knowledge Base">
+  <defs>
+    <linearGradient id="paper" x1="18" y1="12" x2="112" y2="118" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f8fbfb"/>
+      <stop offset="1" stop-color="#dce8ec"/>
+    </linearGradient>
+    <linearGradient id="seal" x1="40" y1="34" x2="91" y2="91" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6f8b99"/>
+      <stop offset="1" stop-color="#415f6d"/>
+    </linearGradient>
+  </defs>
+  <rect x="14" y="16" width="100" height="96" rx="24" fill="url(#paper)" stroke="#78909a" stroke-width="6"/>
+  <path d="M37 43c0-8 7-15 15-15h24c8 0 15 7 15 15v17h-9V43c0-3-3-6-6-6H52c-3 0-6 3-6 6v17h-9V43Z" fill="#415f6d"/>
+  <rect x="31" y="55" width="66" height="48" rx="14" fill="url(#seal)"/>
+  <path d="M52 78h24" stroke="#f7fbfa" stroke-width="6" stroke-linecap="round"/>
+  <path d="M64 66v24" stroke="#f7fbfa" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="91" cy="33" r="8" fill="#b6a58b"/>
+  <path d="M95 19l4 8 9 2-7 6 1 9-7-5-8 5 2-9-7-6 9-2 4-8Z" fill="#b6a58b"/>
+</svg>

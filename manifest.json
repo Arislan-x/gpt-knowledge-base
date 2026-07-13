@@ -1,0 +1,106 @@
+{
+  "manifest_version": 3,
+  "name": "GPT 知识库",
+  "version": "0.3.33",
+  "description": "Cross-platform live backup for AI conversations, with selected chats prepared for RAG knowledge bases.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://claude.ai/*",
+    "https://claude.com/*",
+    "https://grok.com/*",
+    "https://x.com/i/grok*",
+    "https://chat.deepseek.com/*",
+    "https://deepseek.com/*",
+    "https://kimi.com/*",
+    "https://www.kimi.com/*",
+    "https://kimi.moonshot.cn/*",
+    "https://gemini.google.com/*",
+    "https://perplexity.ai/*",
+    "https://www.perplexity.ai/*",
+    "https://poe.com/*",
+    "https://chat.qwen.ai/*",
+    "https://qianwen.com/*",
+    "https://www.qianwen.com/*",
+    "https://*.qianwen.com/*",
+    "https://doubao.com/*",
+    "https://www.doubao.com/*",
+    "https://yuanbao.tencent.com/*",
+    "https://yiyan.baidu.com/*",
+    "https://wenxin.baidu.com/*",
+    "https://chatglm.cn/*",
+    "https://www.chatglm.cn/*",
+    "https://*.chatglm.cn/*",
+    "https://z.ai/*",
+    "https://chat.z.ai/*",
+    "https://*.z.ai/*",
+    "https://huggingface.co/*",
+    "https://hf.co/*"
+  ],
+  "action": {
+    "default_title": "GPT 知识库",
+    "default_popup": "src/popup.html"
+  },
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.deepseek.com/*",
+        "https://deepseek.com/*"
+      ],
+      "js": [
+        "src/page-hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*",
+        "https://claude.com/*",
+        "https://grok.com/*",
+        "https://x.com/i/grok*",
+        "https://chat.deepseek.com/*",
+        "https://deepseek.com/*",
+        "https://kimi.com/*",
+        "https://www.kimi.com/*",
+        "https://kimi.moonshot.cn/*",
+        "https://gemini.google.com/*",
+        "https://perplexity.ai/*",
+        "https://www.perplexity.ai/*",
+        "https://poe.com/*",
+        "https://chat.qwen.ai/*",
+        "https://qianwen.com/*",
+        "https://www.qianwen.com/*",
+        "https://*.qianwen.com/*",
+        "https://doubao.com/*",
+        "https://www.doubao.com/*",
+        "https://yuanbao.tencent.com/*",
+        "https://yiyan.baidu.com/*",
+        "https://wenxin.baidu.com/*",
+        "https://chatglm.cn/*",
+        "https://www.chatglm.cn/*",
+        "https://*.chatglm.cn/*",
+        "https://z.ai/*",
+        "https://chat.z.ai/*",
+        "https://*.z.ai/*",
+        "https://huggingface.co/chat*",
+        "https://hf.co/chat*"
+      ],
+      "js": [
+        "src/content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
