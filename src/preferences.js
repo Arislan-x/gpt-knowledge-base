@@ -45,7 +45,7 @@
   const TEXT = {
     zh: {
       appTitle: "GPT 知识库",
-      appKicker: "跨平台实时备份",
+      appKicker: "跨平台汇聚对话，构建 RAG 知识库",
       loadingBackups: "正在读取备份",
       waitingForChat: "等待打开支持的 AI 对话页",
       backupsReady: "备份已就绪",
@@ -138,7 +138,7 @@
     },
     en: {
       appTitle: "GPT Knowledge Base",
-      appKicker: "Cross-platform live backup",
+      appKicker: "Unify AI conversations into a RAG knowledge base",
       loadingBackups: "Loading backups",
       waitingForChat: "Waiting for a supported AI chat page",
       backupsReady: "Backups ready",

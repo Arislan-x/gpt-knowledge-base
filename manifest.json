@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "GPT 知识库",
-  "version": "0.3.33",
-  "description": "Cross-platform live backup for AI conversations, with selected chats prepared for RAG knowledge bases.",
+  "version": "0.3.34",
+  "description": "Turn selected conversations across AI platforms into a local, traceable RAG knowledge base, with live backup as the capture layer.",
   "permissions": [
     "activeTab",
     "storage",
