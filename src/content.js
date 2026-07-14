@@ -221,10 +221,14 @@
     {
       key: "wenxin",
       label: "文心一言",
-      hosts: ["yiyan.baidu.com", "wenxin.baidu.com"],
+      hosts: ["chat.baidu.com", "yiyan.baidu.com", "wenxin.baidu.com"],
       titlePatterns: [/\s+-\s+文心一言\s*$/i, /^\s*文心一言\s*[-:：]\s*/i, /\s+-\s+文小言\s*$/i, /^\s*文小言\s*[-:：]\s*/i],
-      conversationPatterns: [/\/chat\/([^/?#]+)/, /\/conversation\/([^/?#]+)/, /\/c\/([^/?#]+)/],
+      conversationPatterns: [/\/chat\/([^/?#]+)/, /\/conversation\/([^/?#]+)/, /\/c\/([^/?#]+)/, /\/search(?:\/|$)/],
       messageSources: [
+        { selector: "[data-role='user'], [data-message-author-role='user']", role: "user", minLength: 1 },
+        { selector: "[data-role='assistant'], [data-message-author-role='assistant']", role: "assistant", minLength: 1 },
+        { selector: "[class*='user' i][class*='message' i], [class*='question' i], [class*='query' i]", role: "user", minLength: 1 },
+        { selector: "[class*='assistant' i][class*='message' i], [class*='answer' i], [class*='response' i]", role: "assistant", minLength: MIN_GENERIC_MESSAGE_LENGTH },
         { selector: "[data-testid*='message' i]", inferRole: true, minLength: 1 },
         { selector: "[data-role]", roleAttr: "data-role", minLength: 1 },
         { selector: "[class*='message' i]", inferRole: true, minLength: MIN_GENERIC_MESSAGE_LENGTH },
@@ -288,6 +292,7 @@
   let captureTimer = 0;
   let captureEnabled = true;
   let deepSeekNetworkMessages = [];
+  let deepSeekNetworkTitle = "";
   let chatGptBackendCache = {
     id: "",
     at: 0,
@@ -354,12 +359,18 @@
         return;
       }
 
-      const messages = parseDeepSeekNetworkPacket(packet);
+      const structured = parseDeepSeekStructuredConversationText(packet.responseText);
+      const messages = structured.messages.length ? structured.messages : parseDeepSeekNetworkPacket(packet);
       if (!messages.length) {
         return;
       }
 
-      deepSeekNetworkMessages = mergeDeepSeekMessageSets(deepSeekNetworkMessages, messages);
+      if (structured.messages.length) {
+        deepSeekNetworkMessages = structured.messages;
+        deepSeekNetworkTitle = structured.title || deepSeekNetworkTitle;
+      } else {
+        deepSeekNetworkMessages = mergeDeepSeekMessageSets(deepSeekNetworkMessages, messages);
+      }
       scheduleCapture("deepseek-network");
     });
 
@@ -428,6 +439,10 @@
     }
     lastUrl = location.href;
     lastFingerprint = "";
+    if (platform.key === "deepseek") {
+      deepSeekNetworkMessages = [];
+      deepSeekNetworkTitle = "";
+    }
     scheduleCapture("url-change");
   }
 
@@ -889,7 +904,7 @@
 
     if (platform.key === "deepseek") {
       const deepSeekMessages = collectDeepSeekMessages();
-      if (isUsefulMessageSet(deepSeekMessages)) {
+      if (deepSeekMessages.length) {
         return deepSeekMessages;
       }
     }
@@ -1010,6 +1025,110 @@
 
   function hasKnownRoles(messages) {
     return messages.some((message) => message.role === "user" || message.role === "assistant");
+  }
+
+  function parseDeepSeekStructuredConversationText(text) {
+    const result = { messages: [], title: "" };
+    for (const parsed of parsePossibleJsonValues(String(text || ""))) {
+      const payload = findDeepSeekConversationPayload(parsed);
+      if (!payload) {
+        continue;
+      }
+
+      const branch = getDeepSeekCurrentBranch(payload);
+      const messages = deepSeekBranchToMessages(branch);
+      if (messages.length) {
+        result.messages = messages;
+        result.title = normalizeText(payload.chat_session?.title || "");
+        return result;
+      }
+    }
+    return result;
+  }
+
+  function findDeepSeekConversationPayload(value, depth = 0) {
+    if (!value || typeof value !== "object" || depth > 10) {
+      return null;
+    }
+    if (Array.isArray(value.chat_messages) && value.chat_session && typeof value.chat_session === "object") {
+      return value;
+    }
+    for (const child of Object.values(value)) {
+      if (!child || typeof child !== "object") {
+        continue;
+      }
+      const payload = findDeepSeekConversationPayload(child, depth + 1);
+      if (payload) {
+        return payload;
+      }
+    }
+    return null;
+  }
+
+  function getDeepSeekCurrentBranch(payload) {
+    const messages = Array.isArray(payload?.chat_messages) ? payload.chat_messages : [];
+    const byId = new Map();
+    for (const message of messages) {
+      const id = String(message?.message_id || message?.id || "");
+      if (id) {
+        byId.set(id, message);
+      }
+    }
+
+    const branch = [];
+    const seen = new Set();
+    let currentId = String(payload?.chat_session?.current_message_id || "");
+    while (currentId && byId.has(currentId) && !seen.has(currentId)) {
+      seen.add(currentId);
+      const message = byId.get(currentId);
+      branch.unshift(message);
+      currentId = String(message?.parent_id || "");
+    }
+
+    if (branch.length) {
+      return branch;
+    }
+
+    return [...messages].sort((a, b) => {
+      const aTime = Number(a?.inserted_at || a?.created_at || 0);
+      const bTime = Number(b?.inserted_at || b?.created_at || 0);
+      return aTime - bTime;
+    });
+  }
+
+  function deepSeekBranchToMessages(branch) {
+    const result = [];
+    for (const source of branch || []) {
+      const role = normalizeNetworkRole(source?.role || source?.message_role || source?.type);
+      if (role !== "user" && role !== "assistant") {
+        continue;
+      }
+
+      const sourceId = String(source?.message_id || source?.id || hashString(JSON.stringify(source).slice(0, 800)));
+      const thinking = role === "assistant"
+        ? firstNetworkText(source?.thinking_content, source?.reasoning_content, source?.reasoningContent)
+        : "";
+      if (thinking) {
+        result.push({
+          id: `thinking-${sourceId}`,
+          role: "thinking",
+          text: normalizeText(thinking),
+          index: result.length
+        });
+      }
+
+      const text = normalizeText(stripDeepSeekVolatileText(readDeepSeekNetworkContent(source)));
+      if (!text || isDeepSeekControlLine(text)) {
+        continue;
+      }
+      result.push({
+        id: sourceId,
+        role,
+        text,
+        index: result.length
+      });
+    }
+    return result;
   }
 
   function parseDeepSeekNetworkPacket(packet) {
@@ -1272,19 +1391,23 @@
 
   function collectDeepSeekMessages() {
     const networkMessages = deepSeekNetworkMessages;
-    const directMessages = collectMessages(platform.messageSources || []);
-    const layoutMessages = collectDeepSeekMessagesFromLayout();
-    const bubbleMessages = collectDeepSeekUserBubbles();
-
-    const mergedMessages = mergeDeepSeekMessageSets(networkMessages, bubbleMessages, layoutMessages, directMessages);
-    const candidates = [mergedMessages, networkMessages, layoutMessages, directMessages, bubbleMessages]
-      .filter((messages) => messages.length);
-    const best = candidates.sort((a, b) => scoreMessageSet(b) - scoreMessageSet(a))[0] || [];
-    if (hasBothConversationRoles(best)) {
-      return best;
+    if (hasBothConversationRoles(networkMessages)) {
+      return networkMessages;
     }
 
-    return mergedMessages;
+    const directMessages = collectMessages([
+      { selector: "[data-role='user'], [data-message-author-role='user']", role: "user", minLength: 1 },
+      { selector: "[data-role='assistant'], [data-message-author-role='assistant']", role: "assistant", minLength: 1 },
+      { selector: ".ds-markdown", role: "assistant", minLength: 1 }
+    ]);
+    const bubbleMessages = collectDeepSeekUserBubbles();
+    const stableDomMessages = mergeDeepSeekMessageSets(bubbleMessages, directMessages);
+    if (hasBothConversationRoles(stableDomMessages)) {
+      return mergeDeepSeekMessageSets(networkMessages, stableDomMessages);
+    }
+
+    const layoutMessages = collectDeepSeekMessagesFromLayout();
+    return mergeDeepSeekMessageSets(networkMessages, stableDomMessages, layoutMessages);
   }
 
   function collectDeepSeekUserBubbles() {
@@ -3600,6 +3723,10 @@
   }
 
   function getConversationTitle(id, messages) {
+    if (platform.key === "deepseek" && deepSeekNetworkTitle) {
+      return trimToLength(deepSeekNetworkTitle, 90);
+    }
+
     const sidebarTitle = getSidebarTitle(id);
     if (sidebarTitle) {
       return sidebarTitle;

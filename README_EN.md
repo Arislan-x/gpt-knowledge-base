@@ -53,7 +53,7 @@ The extension creates a separate logical group for each supported platform:
 - Qwen: `chat.qwen.ai`, `qianwen.com`, `www.qianwen.com`
 - Doubao: `doubao.com`, `www.doubao.com`
 - Yuanbao: `yuanbao.tencent.com`
-- Yiyan: `yiyan.baidu.com`, `wenxin.baidu.com`
+- Yiyan: `chat.baidu.com`, `yiyan.baidu.com`, `wenxin.baidu.com`
 - Qingyan: `chatglm.cn`, `*.chatglm.cn`, `z.ai`, `*.z.ai`
 - Hugging Face Chat: `huggingface.co/chat`, `hf.co/chat`
 
@@ -63,7 +63,7 @@ These are logical groups inside extension storage, not operating-system folders.
 
 - Fully adapted: ChatGPT, Claude, Gemini, Kimi, and Qwen.
 - Relatively complete capture with limited visual reconstruction: Doubao and Perplexity.
-- Model-side information only: DeepSeek.
+- Backup, capture, and role-based segmentation: DeepSeek. The active branch is rebuilt from the current-conversation response when available, with DOM extraction as a fallback.
 
 Other platforms use dedicated selectors where available and generic fallbacks otherwise. Completeness can change when a platform updates its page structure.
 
@@ -123,7 +123,7 @@ AI conversation websites change their page structures frequently, so each platfo
 - Qwen: Uses dedicated cleanup and message-boundary handling for answer text, citations, sources, and video cards.
 - Perplexity: Restores roles from user-message bubbles and answer containers. Complex source cards may prevent exact visual reconstruction.
 - Poe: Supports current and legacy `ChatMessage` / `MessageBubble` layouts and uses left/right bubble signals to determine roles.
-- DeepSeek: Currently captures model-side information only and is not presented as a complete conversation reconstruction.
+- DeepSeek: Supports backup, capture, and role-based segmentation. It prioritizes reconstruction of the active branch; the visual layout may still differ from the source site.
 - Doubao: Uses `AI-generated content may be inaccurate` and `Completed...` status text as fallback boundaries to recover titles, user prompts, and assistant answers where possible.
 - Yuanbao: Captures human and AI bubble containers independently so earlier messages are not replaced by the last detected message.
 - Qingyan: Reads the `cid` conversation identifier, question containers, and final-answer regions while excluding thinking blocks.

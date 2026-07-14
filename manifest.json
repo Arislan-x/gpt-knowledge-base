@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GPT 知识库",
-  "version": "0.3.39",
+  "version": "0.3.40",
   "description": "Turn selected conversations across AI platforms into a local, traceable RAG knowledge base, with live backup as the capture layer.",
   "permissions": [
     "activeTab",
@@ -34,6 +34,7 @@
     "https://yuanbao.tencent.com/*",
     "https://yiyan.baidu.com/*",
     "https://wenxin.baidu.com/*",
+    "https://chat.baidu.com/*",
     "https://chatglm.cn/*",
     "https://www.chatglm.cn/*",
     "https://*.chatglm.cn/*",
@@ -90,6 +91,7 @@
         "https://yuanbao.tencent.com/*",
         "https://yiyan.baidu.com/*",
         "https://wenxin.baidu.com/*",
+        "https://chat.baidu.com/*",
         "https://chatglm.cn/*",
         "https://www.chatglm.cn/*",
         "https://*.chatglm.cn/*",

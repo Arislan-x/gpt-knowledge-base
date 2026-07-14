@@ -37,7 +37,7 @@
     { key: "qwen", label: "千问", labelEn: "Qwen", labelZh: "千问", pinyin: "Qianwen", owner: "Alibaba Cloud", home: "https://www.qianwen.com/chat/", icon: "Q", logo: "../assets/brand/qwen.png" },
     { key: "doubao", label: "豆包", labelEn: "Doubao", labelZh: "豆包", pinyin: "Doubao", owner: "ByteDance", home: "https://www.doubao.com/", icon: "豆", logo: "../assets/brand/doubao.png" },
     { key: "yuanbao", label: "腾讯元宝", labelEn: "Yuanbao", labelZh: "腾讯元宝", pinyin: "Yuanbao", owner: "Tencent", home: "https://yuanbao.tencent.com/", icon: "元", logo: "../assets/brand/yuanbao.ico" },
-    { key: "wenxin", label: "文心一言", labelEn: "Yiyan", labelZh: "文心一言", pinyin: "Yiyan", owner: "Baidu", home: "https://yiyan.baidu.com/", icon: "文", logo: "../assets/brand/wenxin.png" },
+    { key: "wenxin", label: "文心一言", labelEn: "Yiyan", labelZh: "文心一言", pinyin: "Yiyan", owner: "Baidu", home: "https://chat.baidu.com/?enter_type=wenxin_logo", icon: "文", logo: "../assets/brand/wenxin.png" },
     { key: "zhipu", label: "智谱清言", labelEn: "Qingyan", labelZh: "智谱清言", pinyin: "Qingyan", owner: "Zhipu AI", home: "https://chatglm.cn/", icon: "智", logo: "../assets/brand/zhipu.png" },
     { key: "huggingface", label: "Hugging Face", owner: "Hugging Face", home: "https://huggingface.co/chat/", icon: "HF", logo: "../assets/brand/huggingface.svg" }
   ];
@@ -121,7 +121,7 @@
       deleteAllConfirm: "删除全部本地备份？",
       deleteOneConfirm: "删除“{title}”？",
       supportedPlatforms: "支持的 GPT / 聊天机器人",
-      compatibilityNotice: "适配等级：ChatGPT、Claude、Gemini、Kimi、千问为完美级适配；豆包、Perplexity 可获取较全信息，但不能良好复原；DeepSeek 当前只能获取模型信息。",
+      compatibilityNotice: "适配等级：ChatGPT、Claude、Gemini、Kimi、千问为完美级适配；DeepSeek 可备份、获取并按角色分段；豆包、Perplexity 可获取较全信息，但不能良好复原。",
       trademarkNotice: "名称和图标仅作指示性链接，商标归各自所有；本工具非官方产品或合作伙伴。",
       backupSwitch: "实时备份",
       captureOn: "已开启",
@@ -214,7 +214,7 @@
       deleteAllConfirm: "Delete all local backups?",
       deleteOneConfirm: "Delete \"{title}\"?",
       supportedPlatforms: "Supported GPTs / chatbots",
-      compatibilityNotice: "Compatibility: ChatGPT, Claude, Gemini, Kimi, and Qwen are fully adapted; Doubao and Perplexity capture relatively complete data but cannot be faithfully reconstructed; DeepSeek currently captures model-side information only.",
+      compatibilityNotice: "Compatibility: ChatGPT, Claude, Gemini, Kimi, and Qwen are fully adapted; DeepSeek supports backup, capture, and role-based segmentation; Doubao and Perplexity capture relatively complete data but cannot be faithfully reconstructed.",
       trademarkNotice: "Names and logos are used only as nominative links; trademarks belong to their owners. This tool is not official or affiliated.",
       backupSwitch: "Live backup",
       captureOn: "On",

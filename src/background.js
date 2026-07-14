@@ -19,7 +19,7 @@ const PLATFORM_FOLDERS = [
   { key: "qwen", label: "千问", hosts: ["chat.qwen.ai", "qianwen.com", "www.qianwen.com"] },
   { key: "doubao", label: "豆包", hosts: ["doubao.com", "www.doubao.com"] },
   { key: "yuanbao", label: "腾讯元宝", hosts: ["yuanbao.tencent.com"] },
-  { key: "wenxin", label: "文心一言", hosts: ["yiyan.baidu.com", "wenxin.baidu.com"] },
+  { key: "wenxin", label: "文心一言", hosts: ["chat.baidu.com", "yiyan.baidu.com", "wenxin.baidu.com"] },
   { key: "zhipu", label: "智谱清言", hosts: ["chatglm.cn", "www.chatglm.cn", "z.ai", "chat.z.ai"] },
   { key: "huggingface", label: "Hugging Face", hosts: ["huggingface.co", "hf.co"] }
 ];
