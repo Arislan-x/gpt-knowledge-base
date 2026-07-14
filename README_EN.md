@@ -64,6 +64,7 @@ These are logical groups inside extension storage, not operating-system folders.
 - Fully adapted: ChatGPT, Claude, Gemini, Kimi, and Qwen.
 - Relatively complete capture with limited visual reconstruction: Doubao and Perplexity.
 - Backup, capture, and role-based segmentation: DeepSeek. The active branch is rebuilt from the current-conversation response when available, with DOM extraction as a fallback.
+- On the current Yiyan interface, a response can be split into a reasoning block and a final message. The extension merges the reasoning into one collapsed block and treats the following message as the final answer.
 
 Other platforms use dedicated selectors where available and generic fallbacks otherwise. Completeness can change when a platform updates its page structure.
 

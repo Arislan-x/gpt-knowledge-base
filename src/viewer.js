@@ -509,6 +509,9 @@ function normalizeConversationMessages(rawMessages, platform) {
   if (platform === "qwen") {
     messages = repairQwenMessagesForDisplay(messages);
   }
+  if (platform === "wenxin") {
+    messages = repairWenxinMessagesForDisplay(messages);
+  }
   if (platform === "chatgpt") {
     messages = repairChatGptThinkingMessages(messages);
   }
@@ -531,6 +534,133 @@ function normalizeMessage(raw, index) {
     role,
     text,
     index: Number.isFinite(raw?.index) ? raw.index : index
+  };
+}
+
+function repairWenxinMessagesForDisplay(messages) {
+  const repaired = [];
+  let turn = [];
+
+  const flushTurn = () => {
+    if (!turn.length) {
+      return;
+    }
+    repaired.push(...collapseWenxinTurnForDisplay(turn));
+    turn = [];
+  };
+
+  for (const message of messages || []) {
+    if (message?.role === "user") {
+      flushTurn();
+      turn = [message];
+      continue;
+    }
+    if (turn.length) {
+      turn.push(message);
+    } else if (message) {
+      repaired.push({ ...message });
+    }
+  }
+  flushTurn();
+
+  return repaired;
+}
+
+function collapseWenxinTurnForDisplay(turnMessages) {
+  const [userMessage, ...steps] = turnMessages;
+  if (!userMessage || !steps.length) {
+    return userMessage ? [{ ...userMessage }] : [];
+  }
+
+  const firstFinalIndex = steps.findIndex((message) => message?.role === "unknown");
+  if (firstFinalIndex < 0) {
+    return collapseWenxinAssistantOnlyTurnForDisplay(userMessage, steps);
+  }
+
+  const result = [{ ...userMessage }];
+  const thinkingMessages = [];
+  const finalMessages = [];
+
+  for (let index = 0; index < steps.length; index += 1) {
+    const message = steps[index];
+    if (!message) {
+      continue;
+    }
+    if (index < firstFinalIndex && (message.role === "assistant" || message.role === "thinking")) {
+      thinkingMessages.push(message);
+      continue;
+    }
+    if (index >= firstFinalIndex && (message.role === "unknown" || message.role === "assistant")) {
+      finalMessages.push(message);
+      continue;
+    }
+    result.push({ ...message });
+  }
+
+  const thinking = mergeWenxinPartsForDisplay(thinkingMessages, "thinking");
+  if (thinking) {
+    result.push(thinking);
+  }
+  const finalAssistant = mergeWenxinPartsForDisplay(finalMessages, "assistant");
+  if (finalAssistant) {
+    result.push(finalAssistant);
+  }
+  return result;
+}
+
+function collapseWenxinAssistantOnlyTurnForDisplay(userMessage, steps) {
+  const result = [{ ...userMessage }];
+  const assistantIndexes = steps
+    .map((message, index) => message?.role === "assistant" ? index : -1)
+    .filter((index) => index >= 0);
+  const finalAssistantIndex = assistantIndexes.at(-1) ?? -1;
+  const thinkingMessages = [];
+
+  for (let index = 0; index < steps.length; index += 1) {
+    const message = steps[index];
+    if (!message) {
+      continue;
+    }
+    if ((message.role === "assistant" || message.role === "thinking") && index !== finalAssistantIndex) {
+      thinkingMessages.push(message);
+      continue;
+    }
+    result.push({ ...message });
+  }
+
+  const thinking = mergeWenxinPartsForDisplay(thinkingMessages, "thinking");
+  if (thinking) {
+    result.splice(1, 0, thinking);
+  }
+  return result;
+}
+
+function mergeWenxinPartsForDisplay(messages, role) {
+  const parts = [];
+  for (const message of messages || []) {
+    const text = cleanText(message?.text);
+    if (!text || parts.some((part) => part === text || part.includes(text))) {
+      continue;
+    }
+    const coveredIndex = parts.findIndex((part) => text.includes(part));
+    if (coveredIndex >= 0) {
+      parts[coveredIndex] = text;
+    } else {
+      parts.push(text);
+    }
+  }
+
+  if (!parts.length) {
+    return null;
+  }
+
+  const text = parts.join("\n\n");
+  const first = messages[0] || {};
+  return {
+    ...first,
+    id: `${role}-${hashString(text.slice(0, 1000))}`,
+    role,
+    text
   };
 }
 

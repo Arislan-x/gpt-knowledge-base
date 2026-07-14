@@ -980,6 +980,13 @@
       }
     }
 
+    if (platform.key === "wenxin") {
+      const wenxinMessages = repairWenxinMessages(configured);
+      if (isUsefulMessageSet(wenxinMessages)) {
+        return wenxinMessages;
+      }
+    }
+
     if (isUsefulMessageSet(configured)) {
       return configured;
     }
@@ -993,6 +1000,13 @@
       return qwenGeneric.length ? qwenGeneric : repairQwenMessages(configured).length ? repairQwenMessages(configured) : collectQwenMessages();
     }
 
+    if (platform.key === "wenxin") {
+      const wenxinMessages = repairWenxinMessages(generic);
+      if (isUsefulMessageSet(wenxinMessages)) {
+        return wenxinMessages;
+      }
+    }
+
     if (isUsefulMessageSet(generic)) {
       return generic;
     }
@@ -1002,6 +1016,146 @@
     }
 
     return collectFallbackTranscript();
+  }
+
+  function repairWenxinMessages(messages) {
+    const repaired = [];
+    let turn = [];
+
+    const flushTurn = () => {
+      if (!turn.length) {
+        return;
+      }
+      repaired.push(...collapseWenxinTurnMessages(turn));
+      turn = [];
+    };
+
+    for (const message of messages || []) {
+      if (message?.role === "user") {
+        flushTurn();
+        turn = [message];
+        continue;
+      }
+
+      if (turn.length) {
+        turn.push(message);
+      } else if (message) {
+        repaired.push({ ...message });
+      }
+    }
+    flushTurn();
+
+    return repaired.map((message, index) => ({
+      ...message,
+      index
+    }));
+  }
+
+  function collapseWenxinTurnMessages(turnMessages) {
+    if (!turnMessages.length) {
+      return [];
+    }
+
+    const [userMessage, ...steps] = turnMessages;
+    if (!steps.length) {
+      return [{ ...userMessage }];
+    }
+
+    const firstFinalIndex = steps.findIndex((message) => message?.role === "unknown");
+    if (firstFinalIndex < 0) {
+      return collapseWenxinAssistantOnlyTurn(userMessage, steps);
+    }
+
+    const result = [{ ...userMessage }];
+    const thinkingMessages = [];
+    const finalMessages = [];
+
+    for (let index = 0; index < steps.length; index += 1) {
+      const message = steps[index];
+      if (!message) {
+        continue;
+      }
+
+      if (index < firstFinalIndex && (message.role === "assistant" || message.role === "thinking")) {
+        thinkingMessages.push(message);
+        continue;
+      }
+
+      if (index >= firstFinalIndex && (message.role === "unknown" || message.role === "assistant")) {
+        finalMessages.push(message);
+        continue;
+      }
+
+      result.push({ ...message });
+    }
+
+    const thinking = mergeWenxinMessageParts(thinkingMessages, "thinking");
+    if (thinking) {
+      result.push(thinking);
+    }
+
+    const finalAssistant = mergeWenxinMessageParts(finalMessages, "assistant");
+    if (finalAssistant) {
+      result.push(finalAssistant);
+    }
+
+    return result;
+  }
+
+  function collapseWenxinAssistantOnlyTurn(userMessage, steps) {
+    const result = [{ ...userMessage }];
+    const assistantIndexes = steps
+      .map((message, index) => message?.role === "assistant" ? index : -1)
+      .filter((index) => index >= 0);
+    const finalAssistantIndex = assistantIndexes.at(-1) ?? -1;
+    const thinkingMessages = [];
+
+    for (let index = 0; index < steps.length; index += 1) {
+      const message = steps[index];
+      if (!message) {
+        continue;
+      }
+      if ((message.role === "assistant" || message.role === "thinking") && index !== finalAssistantIndex) {
+        thinkingMessages.push(message);
+        continue;
+      }
+      result.push({ ...message });
+    }
+
+    const thinking = mergeWenxinMessageParts(thinkingMessages, "thinking");
+    if (thinking) {
+      result.splice(1, 0, thinking);
+    }
+    return result;
+  }
+
+  function mergeWenxinMessageParts(messages, role) {
+    const parts = [];
+    for (const message of messages || []) {
+      const text = normalizeText(message?.text);
+      if (!text || parts.some((part) => part === text || part.includes(text))) {
+        continue;
+      }
+      const coveredIndex = parts.findIndex((part) => text.includes(part));
+      if (coveredIndex >= 0) {
+        parts[coveredIndex] = text;
+      } else {
+        parts.push(text);
+      }
+    }
+
+    if (!parts.length) {
+      return null;
+    }
+
+    const text = parts.join("\n\n");
+    const first = messages[0] || {};
+    return {
+      ...first,
+      id: `${role}-${hashString(text.slice(0, 1000))}`,
+      role,
+      text
+    };
   }
 
   function isUsefulMessageSet(messages) {
