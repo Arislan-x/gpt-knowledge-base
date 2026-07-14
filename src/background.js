@@ -15,7 +15,7 @@ const PLATFORM_FOLDERS = [
   { key: "kimi", label: "Kimi", hosts: ["kimi.com", "www.kimi.com", "kimi.moonshot.cn"] },
   { key: "gemini", label: "Gemini", hosts: ["gemini.google.com"] },
   { key: "perplexity", label: "Perplexity", hosts: ["perplexity.ai", "www.perplexity.ai"] },
-  { key: "poe", label: "Poe", hosts: ["poe.com"] },
+  { key: "poe", label: "Poe", hosts: ["poe.com", "www.poe.com"] },
   { key: "qwen", label: "千问", hosts: ["chat.qwen.ai", "qianwen.com", "www.qianwen.com"] },
   { key: "doubao", label: "豆包", hosts: ["doubao.com", "www.doubao.com"] },
   { key: "yuanbao", label: "腾讯元宝", hosts: ["yuanbao.tencent.com"] },

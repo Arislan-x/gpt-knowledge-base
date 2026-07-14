@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GPT 知识库",
-  "version": "0.3.34",
+  "version": "0.3.39",
   "description": "Turn selected conversations across AI platforms into a local, traceable RAG knowledge base, with live backup as the capture layer.",
   "permissions": [
     "activeTab",
@@ -24,6 +24,7 @@
     "https://perplexity.ai/*",
     "https://www.perplexity.ai/*",
     "https://poe.com/*",
+    "https://www.poe.com/*",
     "https://chat.qwen.ai/*",
     "https://qianwen.com/*",
     "https://www.qianwen.com/*",
@@ -79,6 +80,7 @@
         "https://perplexity.ai/*",
         "https://www.perplexity.ai/*",
         "https://poe.com/*",
+        "https://www.poe.com/*",
         "https://chat.qwen.ai/*",
         "https://qianwen.com/*",
         "https://www.qianwen.com/*",

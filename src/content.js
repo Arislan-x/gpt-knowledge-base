@@ -153,8 +153,10 @@
       titlePatterns: [/\s+-\s+Perplexity\s*$/i, /^\s*Perplexity\s*[-:]\s*/i],
       conversationPatterns: [/\/search\/([^/?#]+)/, /\/spaces\/[^/]+\/[^/]+\/([^/?#]+)/],
       messageSources: [
+        { selector: "[data-testid='user-message-bubble']", role: "user", minLength: 1 },
         { selector: "[data-testid*='query' i]", role: "user", minLength: 1 },
         { selector: "[data-testid*='answer' i]", role: "assistant", minLength: 1 },
+        { selector: "[class*='AnswerBody' i], [class*='AssistantMessage' i], .answer-text", role: "assistant", minLength: 1 },
         { selector: "[data-testid*='message' i]", inferRole: true, minLength: 1 },
         { selector: "article", inferRole: true, minLength: MIN_GENERIC_MESSAGE_LENGTH }
       ]
@@ -162,10 +164,13 @@
     {
       key: "poe",
       label: "Poe",
-      hosts: ["poe.com"],
+      hosts: ["poe.com", "www.poe.com"],
       titlePatterns: [/\s+-\s+Poe\s*$/i, /^\s*Poe\s*[-:]\s*/i],
       conversationPatterns: [/\/chat\/([^/?#]+)/, /\/([^/?#]+)$/],
       messageSources: [
+        { selector: "[class*='ChatMessage_rightSide' i]", role: "user", minLength: 1 },
+        { selector: "[class*='ChatMessage_messageWrapper' i], [class*='ChatMessage_wrapper' i]", inferRole: true, minLength: 1 },
+        { selector: "[class*='Markdown_markdown' i], [class*='Prose_prose' i]", inferRole: true, minLength: 1 },
         { selector: "[data-testid*='ChatMessage' i]", inferRole: true, minLength: 1 },
         { selector: "[data-testid*='message' i]", inferRole: true, minLength: 1 },
         { selector: "[class*='Message' i]", inferRole: true, minLength: MIN_GENERIC_MESSAGE_LENGTH }
@@ -201,8 +206,12 @@
       label: "腾讯元宝",
       hosts: ["yuanbao.tencent.com"],
       titlePatterns: [/\s+-\s+腾讯元宝\s*$/i, /^\s*腾讯元宝\s*[-:：]\s*/i, /\s+-\s+元宝\s*$/i, /^\s*元宝\s*[-:：]\s*/i],
-      conversationPatterns: [/\/chat\/([^/?#]+)/, /\/conversation\/([^/?#]+)/, /\/c\/([^/?#]+)/],
+      conversationPatterns: [/\/chat\/[^/?#]+\/([^/?#]+)/, /\/chat\/([^/?#]+)/, /\/conversation\/([^/?#]+)/, /\/c\/([^/?#]+)/],
       messageSources: [
+        { selector: ".agent-chat__bubble--human", role: "user", minLength: 1 },
+        { selector: ".agent-chat__conv--human", role: "user", minLength: 1 },
+        { selector: ".agent-chat__bubble--ai", role: "assistant", minLength: 1 },
+        { selector: ".hyc-common-markdown", role: "assistant", minLength: 1 },
         { selector: "[data-testid*='message' i]", inferRole: true, minLength: 1 },
         { selector: "[data-role]", roleAttr: "data-role", minLength: 1 },
         { selector: "[class*='message' i]", inferRole: true, minLength: MIN_GENERIC_MESSAGE_LENGTH },
@@ -229,6 +238,8 @@
       titlePatterns: [/\s+-\s+智谱清言\s*$/i, /^\s*智谱清言\s*[-:：]\s*/i, /\s+-\s+清言\s*$/i, /^\s*清言\s*[-:：]\s*/i, /\s+-\s+ChatGLM\s*$/i, /^\s*ChatGLM\s*[-:]\s*/i, /\s+-\s+Z\.ai\s*$/i, /^\s*Z\.ai\s*[-:]\s*/i],
       conversationPatterns: [/\/main\/[^/?#]+\/([^/?#]+)/, /\/chat\/([^/?#]+)/, /\/conversation\/([^/?#]+)/, /\/c\/([^/?#]+)/, /\/chat(?:\/|$)/],
       messageSources: [
+        { selector: ".conversation.question .question-txt, .question-txt", role: "user", minLength: 1 },
+        { selector: "[class*='answer-content-wrap' i]", role: "assistant", minLength: 1 },
         { selector: "[data-testid*='message' i]", inferRole: true, minLength: 1 },
         { selector: "[data-role]", roleAttr: "data-role", minLength: 1 },
         { selector: "[class*='message' i]", inferRole: true, minLength: MIN_GENERIC_MESSAGE_LENGTH },
@@ -246,6 +257,8 @@
       titlePatterns: [/\s+-\s+Hugging Face\s*$/i, /^\s*Hugging Face\s*[-:]\s*/i, /\s+-\s+HuggingChat\s*$/i, /^\s*HuggingChat\s*[-:]\s*/i],
       conversationPatterns: [/\/chat\/conversation\/([^/?#]+)/, /\/chat\/([^/?#]+)/],
       messageSources: [
+        { selector: "[data-message-type='user']", role: "user", idAttr: "data-message-id", minLength: 1 },
+        { selector: "[data-message-role='assistant']", role: "assistant", idAttr: "data-message-id", minLength: 1 },
         { selector: "[data-testid*='message' i]", inferRole: true, minLength: 1 },
         { selector: "[data-role]", roleAttr: "data-role", minLength: 1 },
         { selector: "[class*='message' i]", inferRole: true, minLength: MIN_GENERIC_MESSAGE_LENGTH },
@@ -888,10 +901,45 @@
       }
     }
 
+    if (platform.key === "yuanbao") {
+      const yuanbaoMessages = collectYuanbaoMessages();
+      if (isUsefulMessageSet(yuanbaoMessages)) {
+        return yuanbaoMessages;
+      }
+    }
+
     if (platform.key === "qwen") {
       const qwenMessages = collectQwenMessages();
       if (qwenMessages.length && hasUsefulQwenMessageSet(qwenMessages)) {
         return qwenMessages;
+      }
+    }
+
+    if (platform.key === "perplexity") {
+      const perplexityMessages = collectPerplexityMessages();
+      if (isUsefulMessageSet(perplexityMessages)) {
+        return perplexityMessages;
+      }
+    }
+
+    if (platform.key === "poe") {
+      const poeMessages = collectPoeMessages();
+      if (isUsefulMessageSet(poeMessages)) {
+        return poeMessages;
+      }
+    }
+
+    if (platform.key === "zhipu") {
+      const zhipuMessages = collectZhipuMessages();
+      if (isUsefulMessageSet(zhipuMessages)) {
+        return zhipuMessages;
+      }
+    }
+
+    if (platform.key === "huggingface") {
+      const huggingFaceMessages = collectHuggingFaceMessages();
+      if (isUsefulMessageSet(huggingFaceMessages)) {
+        return huggingFaceMessages;
       }
     }
 
@@ -2398,11 +2446,17 @@
     const candidates = roots
       .map((node) => extractDoubaoText(node))
       .filter((text) => findDoubaoWarning(text))
-      .map((text) => ({
-        text,
-        hasDivider: text.split("\n").some((line) => isDoubaoAssistantDividerLine(line)),
-        length: text.length
-      }));
+      .map((text) => {
+        const parts = splitDoubaoTranscriptText(text);
+        const assistantText = parts.find((part) => part.role === "assistant")?.text || "";
+        return {
+          text,
+          hasCompletePair: parts.length === 2,
+          hasDivider: text.split("\n").some((line) => isDoubaoAssistantDividerLine(line)),
+          assistantLength: assistantText.length,
+          length: text.length
+        };
+      });
 
     if (!candidates.length) {
       return roots[0] ? extractDoubaoText(roots[0]) : "";
@@ -2410,6 +2464,12 @@
 
     return candidates
       .sort((a, b) => {
+        if (a.hasCompletePair !== b.hasCompletePair) {
+          return a.hasCompletePair ? -1 : 1;
+        }
+        if (a.hasCompletePair && b.hasCompletePair && a.assistantLength !== b.assistantLength) {
+          return b.assistantLength - a.assistantLength;
+        }
         if (a.hasDivider !== b.hasDivider) {
           return a.hasDivider ? -1 : 1;
         }
@@ -2494,17 +2554,139 @@
     return lines.length ? lines[lines.length - 1].slice(0, 120) : "";
   }
 
+  function getDoubaoPageTitle() {
+    const warningNodes = queryAllSafe([
+      "header",
+      "[class*='header' i]",
+      "[class*='title' i]",
+      "[class*='warning' i]",
+      "h1",
+      "h2",
+      "h3",
+      "p",
+      "span"
+    ].join(","))
+      .filter((node) => isVisible(node) && findDoubaoWarning(node.textContent || ""));
+
+    for (const warningNode of warningNodes) {
+      let current = warningNode;
+      for (let depth = 0; current && depth < 6; depth += 1) {
+        const title = extractDoubaoTitleFromText(current.textContent || "");
+        if (isUsefulDoubaoTitle(title)) {
+          return title;
+        }
+        current = current.parentElement;
+      }
+    }
+
+    const topCandidates = queryAllSafe([
+      "header h1",
+      "header h2",
+      "header h3",
+      "header [class*='title' i]",
+      "[class*='chat-title' i]",
+      "[class*='conversation-title' i]",
+      "h1",
+      "h2"
+    ].join(","))
+      .filter((node) => isVisible(node))
+      .map((node) => {
+        const rect = node.getBoundingClientRect();
+        const text = normalizeText(node.textContent || "");
+        const marker = `${node.tagName} ${node.className || ""}`.toLowerCase();
+        const score = (rect.top >= 0 && rect.top < 180 ? 400 : 0) +
+          (/h1|h2|title/.test(marker) ? 250 : 0) +
+          (rect.left + rect.width / 2 > window.innerWidth * 0.35 && rect.left + rect.width / 2 < window.innerWidth * 0.65 ? 120 : 0) -
+          Math.min(text.length, 180);
+        return { text, score };
+      })
+      .filter((candidate) => isUsefulDoubaoTitle(candidate.text))
+      .sort((a, b) => b.score - a.score);
+
+    return topCandidates[0]?.text || "";
+  }
+
+  function isUsefulDoubaoTitle(text) {
+    const value = normalizeInlineMarkdown(text);
+    return Boolean(value &&
+      value.length >= 2 &&
+      value.length <= 120 &&
+      !findDoubaoWarning(value) &&
+      !isDoubaoChromeLine(value) &&
+      !/^(豆包|Doubao)$/i.test(value));
+  }
+
   function findDoubaoWarning(text) {
     const match = String(text || "").match(/AI\s*生成可能有误\s*注意核实/);
     return match ? { index: match.index, text: match[0] } : null;
   }
 
   function stripDoubaoChromeLines(text) {
-    return normalizeText(String(text || "")
+    const filtered = String(text || "")
       .replace(/\r/g, "")
       .split("\n")
       .filter((line) => !isDoubaoChromeLine(line))
-      .join("\n"));
+      .join("\n");
+    return stripDoubaoTrailingUiChrome(filtered);
+  }
+
+  function stripDoubaoTrailingUiChrome(text) {
+    const lines = String(text || "").replace(/\r/g, "").split("\n");
+    let end = lines.length;
+    while (end > 0 && !lines[end - 1].trim()) {
+      end -= 1;
+    }
+    if (!end) {
+      return "";
+    }
+
+    const scanStart = Math.max(0, end - 60);
+    const tail = lines.slice(scanStart, end);
+    const markers = tail
+      .map((line, index) => isDoubaoTrailingUiLine(line) ? scanStart + index : -1)
+      .filter((index) => index >= 0);
+    const modeMarkers = tail
+      .map((line, index) => isDoubaoModeUiLine(line) ? scanStart + index : -1)
+      .filter((index) => index >= 0);
+    const strongMarkers = tail
+      .map((line, index) => isStrongDoubaoTrailingUiLine(line) ? scanStart + index : -1)
+      .filter((index) => index >= 0);
+
+    let cutAt = -1;
+    if (modeMarkers.length >= 6 || (modeMarkers.length >= 4 && strongMarkers.length)) {
+      cutAt = modeMarkers[0];
+    } else if (strongMarkers.length && markers.length >= 2) {
+      cutAt = markers[0];
+    }
+    if (cutAt < 0) {
+      return normalizeText(lines.join("\n"));
+    }
+
+    while (cutAt > 0 && !lines[cutAt - 1].trim()) {
+      cutAt -= 1;
+    }
+    return normalizeText(lines.slice(0, cutAt).join("\n"));
+  }
+
+  function isDoubaoModeUiLine(line) {
+    const value = normalizeInlineMarkdown(line).replace(/\s+/g, " ").trim();
+    return /^(快速|PPT\s*生成|图像生成|帮我写作|音乐生成|翻译|视频生成|录音转写)$/i.test(value);
+  }
+
+  function isStrongDoubaoTrailingUiLine(line) {
+    const value = normalizeInlineMarkdown(line).replace(/\s+/g, " ").trim();
+    return /^在此处拖放文件\s*文件数量[：:]?\s*最多\s*\d+\s*个.*文件类型[：:]/.test(value) ||
+      /^Timeline(?:$|关于|[\s:：])/i.test(value) ||
+      /^v\d+(?:\.\d+){1,3}$/i.test(value) ||
+      /^(Panel|闪记|保存到文件夹)$/i.test(value) ||
+      /^[✓✔]?\s*已复制$/i.test(value);
+  }
+
+  function isDoubaoTrailingUiLine(line) {
+    const value = normalizeInlineMarkdown(line).replace(/\s+/g, " ").trim();
+    return isDoubaoModeUiLine(value) ||
+      isStrongDoubaoTrailingUiLine(value) ||
+      /^追问$/.test(value);
   }
 
   function isDoubaoChromeLine(line) {
@@ -2514,6 +2696,7 @@
       .trim();
     return !value ||
       /^AI\s*生成可能有误\s*注意核实$/.test(value) ||
+      /^参考\s*\d+\s*篇(?:资料|来源|网页|文献)\s*[>›]?$/.test(value) ||
       /^(重新生成|复制|分享|删除|编辑|赞|踩|更多)$/.test(value);
   }
 
@@ -2521,7 +2704,9 @@
     const value = normalizeInlineMarkdown(line)
       .replace(/\s+/g, " ")
       .trim();
-    return /^已完成[^，,。.!?]{0,30}生成\s*[（(]\s*\d+\s*(?:h|小时|m|min|分钟|分)?\s*\d*\s*(?:s|秒)?\s*[）)]\s*$/i.test(value) ||
+    return /^已完成(?:深度)?思考(?:\s*[（(][^）)]{0,40}[）)])?\s*$/i.test(value) ||
+      /^搜索\s*\d+\s*个关键词(?:\s*[，,]?\s*参考\s*\d+\s*篇(?:资料|来源|网页|文献))?\s*[>›]?$/.test(value) ||
+      /^已完成[^，,。.!?]{0,30}生成\s*[（(]\s*\d+\s*(?:h|小时|m|min|分钟|分)?\s*\d*\s*(?:s|秒)?\s*[）)]\s*$/i.test(value) ||
       /^已完成\s*[，,]\s*参考.{0,24}篇参考\s*$/.test(value) ||
       /^已完成\s*[，,]\s*.{0,36}(参考|资料|网页|文献)\s*$/.test(value);
   }
@@ -2924,6 +3109,296 @@
       /(^|\s)(分享|Share)(\s|$)/i.test(tail);
   }
 
+  function collectYuanbaoMessages() {
+    const primaryUserNodes = queryAllSafe(".agent-chat__bubble--human");
+    const primaryAssistantNodes = queryAllSafe(".agent-chat__bubble--ai");
+    const userNodes = primaryUserNodes.length
+      ? primaryUserNodes
+      : queryAllSafe(".agent-chat__conv--human");
+    const assistantNodes = primaryAssistantNodes.length
+      ? primaryAssistantNodes
+      : queryAllSafe(".hyc-common-markdown");
+
+    const entries = [
+      ...userNodes.map((node) => ({ node, role: "user" })),
+      ...assistantNodes.map((node) => ({ node, role: "assistant" }))
+    ]
+      .filter((entry) => isVisible(entry.node))
+      .map((entry) => ({
+        ...entry,
+        text: extractText(entry.node),
+        rawId: readAttribute(entry.node, "data-message-id") ||
+          readAttribute(entry.node, "data-msg-id") ||
+          readAttribute(entry.node, "data-id") ||
+          readAttribute(entry.node, "id")
+      }))
+      .filter((entry) => isViableMessageText(entry.text, 1))
+      .filter((entry, index, allEntries) => {
+        return !allEntries.some((other, otherIndex) => {
+          return otherIndex !== index &&
+            other.role === entry.role &&
+            entry.node.contains(other.node) &&
+            entry.text.includes(other.text);
+        });
+      })
+      .sort((a, b) => compareNodeOrder(a.node, b.node));
+
+    return entries.map((entry, index) => ({
+      id: entry.rawId || `${entry.role}-${index}-${hashString(entry.text.slice(0, 400))}`,
+      role: entry.role,
+      text: entry.text,
+      index
+    }));
+  }
+
+  function collectPerplexityMessages() {
+    const userNodes = queryFirstVisibleSelector([
+      "[data-testid='user-message-bubble']",
+      "[data-testid*='user-message' i]",
+      "[class*='UserMessage' i]",
+      ".my-md"
+    ]);
+    const assistantNodes = queryFirstVisibleSelector([
+      "[data-testid*='assistant-message' i]",
+      "[class*='AssistantMessage' i]",
+      "[class*='AnswerBody' i]",
+      ".answer-text",
+      ".prose",
+      "article",
+      "[data-testid*='answer' i]"
+    ], (node) => !isPerplexityChromeNode(node));
+
+    return finalizeExplicitRoleMessages([
+      ...userNodes.map((node) => ({ node, role: "user" })),
+      ...assistantNodes.map((node) => ({ node, role: "assistant" }))
+    ], "perplexity");
+  }
+
+  function isPerplexityChromeNode(node) {
+    const chromeAncestor = node.closest("nav, aside, header, footer, form");
+    if (chromeAncestor) {
+      return true;
+    }
+
+    let current = node;
+    for (let depth = 0; current && depth < 5; depth += 1) {
+      const marker = `${current.className || ""} ${current.getAttribute?.("data-testid") || ""}`.toLowerCase();
+      if (/\b(source|citation|related|followup|suggestion|toolbar|composer)\b/.test(marker)) {
+        return true;
+      }
+      current = current.parentElement;
+    }
+    return false;
+  }
+
+  function collectPoeMessages() {
+    const rightSideSelector = [
+      "[class*='ChatMessage_rightSide' i]",
+      "[class*='humanMessageBubble' i]",
+      "[class*='HumanMessage' i]:not([class*='Header' i])",
+      "[class*='human_message_bubble' i]"
+    ];
+    const userNodes = queryFirstVisibleSelector(rightSideSelector);
+    const assistantNodes = queryFirstVisibleSelector([
+      "[class*='ChatMessage_messageWrapper' i]",
+      "[class*='ChatMessage_wrapper' i]",
+      "[class*='botMessageBubble' i]",
+      "[class*='BotMessage' i]:not([class*='Header' i])",
+      "[class*='bot_message_bubble' i]"
+    ], (node) => !node.closest(rightSideSelector.join(",")));
+
+    const entries = [
+      ...userNodes.map((node) => ({ node, role: "user" })),
+      ...assistantNodes.map((node) => ({ node, role: "assistant" }))
+    ];
+    if (!entries.length || !entries.some((entry) => entry.role === "user") || !entries.some((entry) => entry.role === "assistant")) {
+      appendPoeMarkdownEntries(entries, rightSideSelector);
+    }
+
+    return finalizeExplicitRoleMessages(entries, "poe", { preferMarkdownChild: true });
+  }
+
+  function collectHuggingFaceMessages() {
+    const userNodes = queryAllSafe("[data-message-type='user']");
+    const assistantNodes = queryAllSafe("[data-message-role='assistant']");
+    return finalizeExplicitRoleMessages([
+      ...userNodes.map((node) => ({ node, role: "user" })),
+      ...assistantNodes.map((node) => ({ node, role: "assistant" }))
+    ], "huggingface");
+  }
+
+  function collectZhipuMessages() {
+    const items = queryAllSafe(".item.conversation-item");
+    const messages = [];
+
+    for (const [itemIndex, item] of items.entries()) {
+      const userNode = item.querySelector(".conversation.question .question-txt, .question-txt");
+      const userText = cleanZhipuUserText(userNode ? extractText(userNode, { keepControls: true }) : "");
+      if (isViableMessageText(userText, 1)) {
+        messages.push({
+          id: readAttribute(item, "data-message-id") ||
+            readAttribute(item, "data-id") ||
+            `zhipu-user-${itemIndex}-${hashString(userText.slice(0, 400))}`,
+          role: "user",
+          text: userText,
+          index: messages.length
+        });
+      }
+
+      const answerNodes = Array.from(item.querySelectorAll("[class*='answer-content-wrap' i]"))
+        .filter((node) => !node.closest("[class*='text-advance-thinking' i]"));
+      const answerNode = answerNodes[answerNodes.length - 1];
+      const assistantText = answerNode ? extractText(answerNode) : "";
+      if (isViableMessageText(assistantText, 1)) {
+        messages.push({
+          id: readAttribute(answerNode, "data-message-id") ||
+            readAttribute(answerNode, "data-id") ||
+            `zhipu-assistant-${itemIndex}-${hashString(assistantText.slice(0, 400))}`,
+          role: "assistant",
+          text: assistantText,
+          index: messages.length
+        });
+      }
+    }
+
+    if (messages.length) {
+      return messages;
+    }
+
+    const userNodes = queryAllSafe(".conversation.question .question-txt, .question-txt");
+    const assistantNodes = queryAllSafe("[class*='answer-content-wrap' i]")
+      .filter((node) => !node.closest("[class*='text-advance-thinking' i]"));
+    const fallback = finalizeExplicitRoleMessages([
+      ...userNodes.map((node) => ({ node, role: "user" })),
+      ...assistantNodes.map((node) => ({ node, role: "assistant" }))
+    ], "zhipu");
+
+    return fallback.map((message, index) => ({
+      ...message,
+      text: message.role === "user" ? cleanZhipuUserText(message.text) : message.text,
+      index
+    })).filter((message) => isViableMessageText(message.text, 1));
+  }
+
+  function cleanZhipuUserText(text) {
+    return normalizeText(String(text || "")
+      .replace(/复制入框/g, "")
+      .split("\n")
+      .filter((line) => !isMessageControlLine(line))
+      .join("\n"));
+  }
+
+  function appendPoeMarkdownEntries(entries, rightSideSelectors) {
+    const seenContainers = new Set(entries.map((entry) => entry.node));
+    const contentNodes = queryAllSafe([
+      "[class*='Markdown_markdownContainer' i]",
+      "[class*='Markdown_markdown' i]",
+      "[class*='Prose_prose' i]"
+    ].join(","));
+
+    for (const contentNode of contentNodes) {
+      if (!isVisible(contentNode)) {
+        continue;
+      }
+      const container = findPoeMessageContainer(contentNode);
+      if (!container || seenContainers.has(container)) {
+        continue;
+      }
+      const role = container.closest(rightSideSelectors.join(",")) ? "user" : inferPoeRole(container);
+      if (role === "unknown") {
+        continue;
+      }
+      seenContainers.add(container);
+      entries.push({ node: container, contentNode, role });
+    }
+  }
+
+  function findPoeMessageContainer(node) {
+    let current = node;
+    for (let depth = 0; current && depth < 9; depth += 1) {
+      const marker = `${current.className || ""} ${current.getAttribute?.("data-testid") || ""}`.toLowerCase();
+      if (/(chatmessage|messagebubble|messagewrapper|humanmessage|botmessage)/.test(marker)) {
+        return current;
+      }
+      current = current.parentElement;
+    }
+    return node;
+  }
+
+  function inferPoeRole(node) {
+    let current = node;
+    for (let depth = 0; current && depth < 6; depth += 1) {
+      const marker = `${current.className || ""} ${current.getAttribute?.("data-testid") || ""}`.toLowerCase();
+      if (/(rightside|human|user)/.test(marker)) {
+        return "user";
+      }
+      if (/(leftside|botmessage|assistant)/.test(marker)) {
+        return "assistant";
+      }
+      current = current.parentElement;
+    }
+
+    const rect = node.getBoundingClientRect();
+    if (rect.width > 0 && rect.right > window.innerWidth * 0.72 && rect.left > window.innerWidth * 0.42) {
+      return "user";
+    }
+    return rect.width > 0 ? "assistant" : "unknown";
+  }
+
+  function queryFirstVisibleSelector(selectors, predicate = () => true) {
+    for (const selector of selectors) {
+      const nodes = queryAllSafe(selector).filter((node) => isVisible(node) && predicate(node));
+      if (nodes.length) {
+        return nodes;
+      }
+    }
+    return [];
+  }
+
+  function finalizeExplicitRoleMessages(entries, sourceName, options = {}) {
+    const prepared = entries
+      .filter((entry) => entry.node && isVisible(entry.node))
+      .map((entry) => {
+        const preferredContent = options.preferMarkdownChild
+          ? entry.contentNode || entry.node.querySelector("[class*='Markdown_markdown' i], [class*='Prose_prose' i], [class*='markup' i], [class*='messageContent' i], .break-words")
+          : null;
+        const text = extractText(preferredContent || entry.node);
+        return {
+          ...entry,
+          text,
+          rawId: readAttribute(entry.node, "data-message-id") ||
+            readAttribute(entry.node, "data-testid") ||
+            readAttribute(entry.node, "data-id") ||
+            readAttribute(entry.node, "id")
+        };
+      })
+      .filter((entry) => isViableMessageText(entry.text, 1));
+
+    const pruned = prepared.filter((entry, index) => {
+      return !prepared.some((other, otherIndex) => {
+        if (index === otherIndex || entry.role !== other.role || !entry.node.contains(other.node)) {
+          return false;
+        }
+        return other.text === entry.text ||
+          (entry.text.includes(other.text) && other.text.length >= entry.text.length * 0.72);
+      });
+    }).sort((a, b) => compareNodeOrder(a.node, b.node));
+
+    const seenNodes = new Set();
+    return pruned.filter((entry) => {
+      if (seenNodes.has(entry.node)) {
+        return false;
+      }
+      seenNodes.add(entry.node);
+      return true;
+    }).map((entry, index) => ({
+      id: entry.rawId || `${sourceName}-${entry.role}-${index}-${hashString(entry.text.slice(0, 400))}`,
+      role: entry.role,
+      text: entry.text,
+      index
+    }));
+  }
+
   function isKimiUserActionLine(line) {
     const value = normalizeInlineMarkdown(line)
       .replace(/[·|｜/]+/g, " ")
@@ -3092,6 +3567,16 @@
         return match[1];
       }
     }
+
+    if (platform.key === "yuanbao" || platform.key === "zhipu") {
+      const params = new URLSearchParams(location.search);
+      for (const key of ["conversationId", "conversation_id", "chatId", "chat_id", "cid", "id"]) {
+        const value = params.get(key);
+        if (value) {
+          return value;
+        }
+      }
+    }
     return "";
   }
 
@@ -3121,7 +3606,7 @@
     }
 
     if (platform.key === "doubao") {
-      const doubaoTitle = extractDoubaoTitleFromText(getDoubaoTranscriptText());
+      const doubaoTitle = getDoubaoPageTitle() || extractDoubaoTitleFromText(getDoubaoTranscriptText());
       if (doubaoTitle) {
         return trimToLength(doubaoTitle, 90);
       }

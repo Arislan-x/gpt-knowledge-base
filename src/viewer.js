@@ -9,7 +9,7 @@ const PLATFORM_FOLDERS = [
   { key: "kimi", label: "Kimi", hosts: ["kimi.com", "www.kimi.com", "kimi.moonshot.cn"] },
   { key: "gemini", label: "Gemini", hosts: ["gemini.google.com"] },
   { key: "perplexity", label: "Perplexity", hosts: ["perplexity.ai", "www.perplexity.ai"] },
-  { key: "poe", label: "Poe", hosts: ["poe.com"] },
+  { key: "poe", label: "Poe", hosts: ["poe.com", "www.poe.com"] },
   { key: "qwen", label: "千问", hosts: ["chat.qwen.ai", "qianwen.com", "www.qianwen.com"] },
   { key: "doubao", label: "豆包", hosts: ["doubao.com", "www.doubao.com"] },
   { key: "yuanbao", label: "腾讯元宝", hosts: ["yuanbao.tencent.com"] },
@@ -953,23 +953,86 @@ function findDoubaoWarning(text) {
 }
 
 function stripDoubaoChromeLines(text) {
-  return cleanText(String(text || "")
+  const filtered = String(text || "")
     .replace(/\r/g, "")
     .split("\n")
     .filter((line) => !isDoubaoChromeLine(line))
-    .join("\n"));
+    .join("\n");
+  return stripDoubaoTrailingUiChrome(filtered);
+}
+
+function stripDoubaoTrailingUiChrome(text) {
+  const lines = String(text || "").replace(/\r/g, "").split("\n");
+  let end = lines.length;
+  while (end > 0 && !lines[end - 1].trim()) {
+    end -= 1;
+  }
+  if (!end) {
+    return "";
+  }
+
+  const scanStart = Math.max(0, end - 60);
+  const tail = lines.slice(scanStart, end);
+  const markers = tail
+    .map((line, index) => isDoubaoTrailingUiLine(line) ? scanStart + index : -1)
+    .filter((index) => index >= 0);
+  const modeMarkers = tail
+    .map((line, index) => isDoubaoModeUiLine(line) ? scanStart + index : -1)
+    .filter((index) => index >= 0);
+  const strongMarkers = tail
+    .map((line, index) => isStrongDoubaoTrailingUiLine(line) ? scanStart + index : -1)
+    .filter((index) => index >= 0);
+
+  let cutAt = -1;
+  if (modeMarkers.length >= 6 || (modeMarkers.length >= 4 && strongMarkers.length)) {
+    cutAt = modeMarkers[0];
+  } else if (strongMarkers.length && markers.length >= 2) {
+    cutAt = markers[0];
+  }
+  if (cutAt < 0) {
+    return cleanText(lines.join("\n"));
+  }
+
+  while (cutAt > 0 && !lines[cutAt - 1].trim()) {
+    cutAt -= 1;
+  }
+  return cleanText(lines.slice(0, cutAt).join("\n"));
+}
+
+function isDoubaoModeUiLine(line) {
+  const value = normalizeInlineText(line);
+  return /^(快速|PPT\s*生成|图像生成|帮我写作|音乐生成|翻译|视频生成|录音转写)$/i.test(value);
+}
+
+function isStrongDoubaoTrailingUiLine(line) {
+  const value = normalizeInlineText(line);
+  return /^在此处拖放文件\s*文件数量[：:]?\s*最多\s*\d+\s*个.*文件类型[：:]/.test(value) ||
+    /^Timeline(?:$|关于|[\s:：])/i.test(value) ||
+    /^v\d+(?:\.\d+){1,3}$/i.test(value) ||
+    /^(Panel|闪记|保存到文件夹)$/i.test(value) ||
+    /^[✓✔]?\s*已复制$/i.test(value);
+}
+
+function isDoubaoTrailingUiLine(line) {
+  const value = normalizeInlineText(line);
+  return isDoubaoModeUiLine(value) ||
+    isStrongDoubaoTrailingUiLine(value) ||
+    /^追问$/.test(value);
 }
 
 function isDoubaoChromeLine(line) {
   const value = normalizeInlineText(line);
   return !value ||
     /^AI\s*生成可能有误\s*注意核实$/.test(value) ||
+    /^参考\s*\d+\s*篇(?:资料|来源|网页|文献)\s*[>›]?$/.test(value) ||
     /^(重新生成|复制|分享|删除|编辑|赞|踩|更多)$/.test(value);
 }
 
 function isDoubaoAssistantDividerLine(line) {
   const value = normalizeInlineText(line);
-  return /^已完成[^，,。.!?]{0,30}生成\s*[（(]\s*\d+\s*(?:h|小时|m|min|分钟|分)?\s*\d*\s*(?:s|秒)?\s*[）)]\s*$/i.test(value) ||
+  return /^已完成(?:深度)?思考(?:\s*[（(][^）)]{0,40}[）)])?\s*$/i.test(value) ||
+    /^搜索\s*\d+\s*个关键词(?:\s*[，,]?\s*参考\s*\d+\s*篇(?:资料|来源|网页|文献))?\s*[>›]?$/.test(value) ||
+    /^已完成[^，,。.!?]{0,30}生成\s*[（(]\s*\d+\s*(?:h|小时|m|min|分钟|分)?\s*\d*\s*(?:s|秒)?\s*[）)]\s*$/i.test(value) ||
     /^已完成\s*[，,]\s*参考.{0,24}篇参考\s*$/.test(value) ||
     /^已完成\s*[，,]\s*.{0,36}(参考|资料|网页|文献)\s*$/.test(value);
 }
