@@ -81,17 +81,18 @@ The private commercial product page is available at [`product/index.html`](produ
 6. Click the extension icon to check live-backup status.
 7. Click **Open Workstation** to open the full conversation workstation.
 
-## External Backup Folder
+## Import External Backups
 
-The workstation can read an external backup folder after explicit user authorization.
+The workstation can read a ZIP backup or an external backup folder after explicit user authorization.
 
 - Open the workstation.
-- Click **Choose Folder**.
-- Select a folder containing `.json`, `.md`, or `.markdown` backup files.
+- Click **Import**, then choose **ZIP** or **Folder** in the dialog.
+- ZIP import supports archives exported by this extension and common Store/Deflate ZIP files containing `.json`, `.md`, or `.markdown` backups.
+- Folder import reads `.json`, `.md`, or `.markdown` backup files from the selected folder.
 - Browser-stored and folder-based backups are displayed together.
 - Every conversation is marked as coming from browser storage or a folder.
 
-Chrome extensions cannot silently access arbitrary local paths. The user must explicitly select and authorize the external folder.
+Chrome extensions cannot silently access arbitrary local paths. The user must explicitly select and authorize the ZIP or external folder. Files inside ZIP archives are read only as backup data; code inside them is not executed.
 
 ## Privacy Model
 

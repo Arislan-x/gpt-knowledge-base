@@ -43,6 +43,13 @@ const elements = {
   themeSelect: document.querySelector("#themeSelect"),
   supportedPlatformsButton: document.querySelector("#supportedPlatformsButton"),
   importButton: document.querySelector("#importButton"),
+  importDialog: document.querySelector("#importDialog"),
+  importDialogTitle: document.querySelector("#importDialogTitle"),
+  importZipButton: document.querySelector("#importZipButton"),
+  importZipLabel: document.querySelector("#importZipLabel"),
+  importFolderButton: document.querySelector("#importFolderButton"),
+  importFolderLabel: document.querySelector("#importFolderLabel"),
+  closeImportDialogButton: document.querySelector("#closeImportDialogButton"),
   exportButton: document.querySelector("#exportButton"),
   clearWorkspaceButton: document.querySelector("#clearWorkspaceButton"),
   exportDialog: document.querySelector("#exportDialog"),
@@ -55,6 +62,7 @@ const elements = {
   closeExportDialogButton: document.querySelector("#closeExportDialogButton"),
   cancelExportButton: document.querySelector("#cancelExportButton"),
   confirmExportButton: document.querySelector("#confirmExportButton"),
+  zipFileInput: document.querySelector("#zipFileInput"),
   folderFallbackInput: document.querySelector("#folderFallbackInput"),
   searchInput: document.querySelector("#searchInput"),
   conversationCount: document.querySelector("#conversationCount"),
@@ -97,7 +105,15 @@ document.addEventListener("DOMContentLoaded", initialize);
 elements.languageSelect.addEventListener("change", () => updatePreferences({ language: elements.languageSelect.value }));
 elements.fontSelect.addEventListener("change", () => updatePreferences({ font: elements.fontSelect.value }));
 elements.themeSelect.addEventListener("change", () => updatePreferences({ theme: elements.themeSelect.value }));
-elements.importButton.addEventListener("click", chooseExternalFolder);
+elements.importButton.addEventListener("click", openImportDialog);
+elements.importZipButton.addEventListener("click", chooseZipFile);
+elements.importFolderButton.addEventListener("click", chooseExternalFolderFromDialog);
+elements.closeImportDialogButton.addEventListener("click", closeImportDialog);
+elements.importDialog.addEventListener("click", (event) => {
+  if (event.target === elements.importDialog) {
+    closeImportDialog();
+  }
+});
 elements.exportButton.addEventListener("click", openExportDialog);
 elements.clearWorkspaceButton.addEventListener("click", clearWorkspace);
 elements.closeExportDialogButton.addEventListener("click", closeExportDialog);
@@ -108,6 +124,7 @@ elements.exportDialog.addEventListener("click", (event) => {
     closeExportDialog();
   }
 });
+elements.zipFileInput.addEventListener("change", handleZipFile);
 elements.folderFallbackInput.addEventListener("change", handleFallbackFiles);
 elements.searchInput.addEventListener("input", () => {
   state.query = elements.searchInput.value.trim().toLowerCase();
@@ -192,6 +209,12 @@ function applyStaticText() {
   setTooltip(elements.importButton, tr("importBackupsTooltip"));
   setTooltip(elements.exportButton, tr("exportBackupsTooltip"));
   setTooltip(elements.clearWorkspaceButton, tr("clearWorkspaceTooltip"));
+  elements.importDialogTitle.textContent = tr("importDialogTitle");
+  elements.importZipLabel.textContent = tr("importZip");
+  elements.importFolderLabel.textContent = tr("importFolder");
+  setTooltip(elements.importZipButton, tr("importZipTooltip"));
+  setTooltip(elements.importFolderButton, tr("importFolderTooltip"));
+  elements.closeImportDialogButton.setAttribute("aria-label", tr("close"));
   elements.exportDialogTitle.textContent = tr("exportDialogTitle");
   elements.exportFormatLabel.textContent = tr("exportFormatLabel");
   elements.exportPackagingLabel.textContent = tr("exportPackagingLabel");
@@ -231,6 +254,26 @@ function setConversationActionLabel(button, tooltip, visibleLabel = "") {
 function setTooltip(element, tooltip) {
   element.title = tooltip;
   element.setAttribute("aria-label", tooltip);
+}
+
+function openImportDialog() {
+  elements.importDialog.showModal();
+}
+
+function closeImportDialog() {
+  if (elements.importDialog.open) {
+    elements.importDialog.close();
+  }
+}
+
+function chooseZipFile() {
+  closeImportDialog();
+  elements.zipFileInput.click();
+}
+
+async function chooseExternalFolderFromDialog() {
+  closeImportDialog();
+  await chooseExternalFolder();
 }
 
 function openExportDialog() {
@@ -374,6 +417,53 @@ async function handleFallbackFiles(event) {
   state.externalConversations = await parseExternalFiles(files, state.externalFolderName);
   event.target.value = "";
   render();
+}
+
+async function handleZipFile(event) {
+  const archive = event.target.files?.[0];
+  event.target.value = "";
+  if (!archive) {
+    return;
+  }
+
+  try {
+    const zipEntries = await window.CBV_ZIP_IMPORT.readZip(archive);
+    const files = zipEntries
+      .filter((entry) => isSupportedBackupFile(entry.name))
+      .map((entry) => ({
+        file: new File([entry.bytes], fileNameFromPath(entry.name), { type: contentTypeForBackup(entry.name) }),
+        relativePath: entry.name
+      }));
+
+    if (!files.length) {
+      setStatus(tr("zipNoSupportedFiles"));
+      return;
+    }
+
+    const folderName = archive.name.replace(/\.zip$/i, "") || tr("folder");
+    const conversations = await parseExternalFiles(files, folderName);
+    if (!conversations.length) {
+      setStatus(tr("zipNoReadableBackups"));
+      return;
+    }
+    state.externalFolderName = folderName;
+    state.externalFileCount = files.length;
+    state.externalDirectoryHandle = null;
+    state.externalConversations = conversations;
+    render();
+  } catch (error) {
+    setStatus(tr("zipReadFailed", { message: error?.message || error }));
+  }
+}
+
+function fileNameFromPath(value) {
+  return String(value || "backup.json").split(/[\\/]/).pop() || "backup.json";
+}
+
+function contentTypeForBackup(value) {
+  return String(value || "").toLowerCase().endsWith(".json")
+    ? "application/json"
+    : "text/markdown";
 }
 
 async function parseExternalFiles(files, folderName) {
