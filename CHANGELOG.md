@@ -7,3 +7,5 @@
 - Added Markdown, JSON, HTML, merged-file, and ZIP export workflows.
 - Added local folder import, source-aware browsing, Markdown/LaTeX/code rendering, thinking collapse, and user-question navigation.
 - Added localized Chrome metadata, branded toolbar icons, privacy disclosures, store-listing material, and a reproducible release package.
+- Enlarged the small toolbar artwork and added a private commercial product page.
+- Added a proprietary license notice and GitHub Release installation package.

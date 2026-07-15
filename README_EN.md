@@ -16,7 +16,7 @@ Core workflow:
 2. The extension captures messages from the currently open conversation in real time.
 3. Conversations from different platforms are stored in separate local groups.
 4. Select the conversations worth preserving in GPT Knowledge Base.
-5. Clean and organize the selected conversations for a RAG workflow. The current version exports JSON and Markdown as structured source data.
+5. Clean and organize the selected conversations for a RAG workflow. The current version exports JSON, Markdown, and HTML as structured source data.
 
 In one sentence:
 
@@ -59,7 +59,19 @@ The extension creates a separate logical group for each supported platform:
 
 These are logical groups inside extension storage, not operating-system folders.
 
-## Installation and Testing
+## Install from a Private Release
+
+1. Download the latest `gpt-knowledge-base-*.zip` and `.sha256` files from the private repository's [Releases](https://github.com/Arislan-x/gpt-knowledge-base/releases) page.
+2. Verify the SHA-256 value, then fully extract the ZIP to a stable folder. Chrome cannot load the ZIP directly.
+3. Open `chrome://extensions` in Chrome.
+4. Enable **Developer mode**.
+5. Select **Load unpacked** and choose the extracted directory.
+6. Open or refresh a supported AI conversation page.
+7. Select the extension icon to review backup status and open the workstation.
+
+The private commercial product page is available at [`product/index.html`](product/index.html). It is not publicly deployed.
+
+## Development Installation
 
 1. Open Chrome and navigate to `chrome://extensions`.
 2. Enable **Developer mode**.
@@ -106,6 +118,12 @@ Planned RAG-layer capabilities include:
 This project is not an official product of, sponsored by, endorsed by, or affiliated with OpenAI, Anthropic, xAI, DeepSeek, Moonshot AI, Google, Perplexity AI, Quora, Alibaba Cloud, ByteDance, Tencent, Baidu, Zhipu AI, Hugging Face, or any other supported platform.
 
 All product names, logos, icons, trademarks, and brand assets belong to their respective owners. This project uses names and icons only as nominative links to identify supported websites and open their official pages. Publishers should replace or remove an asset before release if a platform's brand guidelines require different handling.
+
+## Copyright and License
+
+Copyright © 2026 Arislan-x. All rights reserved.
+
+This project is currently private proprietary software. Access to the private repository or an official Release grants only a limited right to install and use the software as authorized. Except where applicable law expressly permits otherwise or with prior written permission, reproduction, modification, redistribution, resale, and derivative works are prohibited. See [`LICENSE`](LICENSE) for the complete notice. Third-party components and trademarks remain subject to their respective terms.
 
 ## Technical Notes
 

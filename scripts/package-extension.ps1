@@ -30,6 +30,9 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $runtimeRoots = @(
   $manifestPath,
+  (Join-Path $root "LICENSE"),
+  (Join-Path $root "PRIVACY.md"),
+  (Join-Path $root "README.md"),
   (Join-Path $root "_locales"),
   (Join-Path $root "assets"),
   (Join-Path $root "src")
@@ -47,7 +50,7 @@ $ignoredNames = @(".DS_Store", "Thumbs.db", "Desktop.ini")
 $archive = [System.IO.Compression.ZipFile]::Open($zipPath, [System.IO.Compression.ZipArchiveMode]::Create)
 try {
   foreach ($file in $files | Where-Object { $ignoredNames -notcontains $_.Name }) {
-    $relative = $file.FullName.Substring($root.Length).TrimStart([char]'\', [char]'/').Replace("\\", "/")
+    $relative = $file.FullName.Substring($root.Length).TrimStart([char]'\', [char]'/').Replace([char]'\', [char]'/')
     [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
       $archive,
       $file.FullName,
