@@ -122,7 +122,7 @@ AI conversation websites change their page structures frequently, so each platfo
 - Claude: Uses a DOM-range fallback to extract assistant content between adjacent user bubbles.
 - Kimi: Detects user bubbles through controls such as `Edit / Copy / Share` and removes trailing Timeline, Panel, note, folder, and LaTeX-copy UI text.
 - Qwen: Uses dedicated cleanup and message-boundary handling for answer text, citations, sources, and video cards.
-- Perplexity: Restores roles from user-message bubbles and answer containers. Complex source cards may prevent exact visual reconstruction.
+- Perplexity: Prefers explicit query/answer markers. When a new page omits answer markers, it extracts the DOM range from one query to the next and repairs older merged records using the title and first-paragraph boundary. Complex source cards may still prevent exact visual reconstruction.
 - Poe: Supports current and legacy `ChatMessage` / `MessageBubble` layouts and uses left/right bubble signals to determine roles.
 - DeepSeek: Supports backup, capture, and role-based segmentation. It prioritizes reconstruction of the active branch; the visual layout may still differ from the source site.
 - Doubao: Uses `AI-generated content may be inaccurate` and `Completed...` status text as fallback boundaries to recover titles, user prompts, and assistant answers where possible.

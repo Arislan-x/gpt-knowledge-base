@@ -589,8 +589,9 @@ function normalizeConversationForPopup(raw, metadata = {}) {
   const sourceHost = String(raw?.sourceHost || metadata.sourceHost || "");
   const inferred = inferPlatform(sourceHost);
   const platform = String(raw?.platform || metadata.platform || inferred?.key || "").toLowerCase();
+  const conversationTitle = raw?.title || metadata.title || "";
   const messages = Array.isArray(raw?.messages)
-    ? normalizeConversationMessages(raw.messages, platform)
+    ? normalizeConversationMessages(raw.messages, platform, conversationTitle)
     : [];
   const doubaoTitle = platform === "doubao" ? extractDoubaoTitleFromMessages(raw?.messages) : "";
 
@@ -613,7 +614,7 @@ function normalizeConversationForPopup(raw, metadata = {}) {
   };
 }
 
-function normalizeConversationMessages(rawMessages, platform) {
+function normalizeConversationMessages(rawMessages, platform, title = "") {
   const normalized = rawMessages.map(normalizeMessage).filter(Boolean);
   if (platform === "kimi") {
     return repairKimiMessagesForDisplay(normalized).map(reindexMessage);
@@ -627,10 +628,61 @@ function normalizeConversationMessages(rawMessages, platform) {
   if (platform === "qwen") {
     return repairQwenMessagesForDisplay(normalized).map(reindexMessage);
   }
+  if (platform === "perplexity") {
+    return repairPerplexityMessagesForDisplay(normalized, title).map(reindexMessage);
+  }
   if (platform === "chatgpt") {
     return repairChatGptThinkingMessages(normalized).map(reindexMessage);
   }
   return normalized.map(reindexMessage);
+}
+
+function repairPerplexityMessagesForDisplay(messages, title) {
+  if (messages.length !== 1 || messages[0]?.role === "user") {
+    return messages;
+  }
+
+  const paragraphs = cleanText(messages[0]?.text).split(/\n{2,}/).map(cleanText).filter(Boolean);
+  if (paragraphs.length < 2 || !isPerplexityDisplayTitleMatch(paragraphs[0], title)) {
+    return messages;
+  }
+
+  let answerParagraphs = paragraphs.slice(1);
+  if (answerParagraphs.length && isPerplexityDisplayTitleMatch(answerParagraphs[0], paragraphs[0])) {
+    answerParagraphs = answerParagraphs.slice(1);
+  }
+  const assistantText = cleanText(answerParagraphs.join("\n\n"));
+  if (!assistantText) {
+    return messages;
+  }
+
+  return [
+    { ...messages[0], id: `perplexity-user-${hashString(paragraphs[0].slice(0, 400))}`, role: "user", text: paragraphs[0] },
+    { ...messages[0], id: `perplexity-assistant-${hashString(assistantText.slice(0, 400))}`, role: "assistant", text: assistantText }
+  ];
+}
+
+function isPerplexityDisplayTitleMatch(value, title) {
+  const left = normalizePerplexityDisplayComparable(value);
+  const right = normalizePerplexityDisplayComparable(title);
+  if (left.length < 6 || right.length < 6) {
+    return false;
+  }
+  if (left === right || left.startsWith(right) || right.startsWith(left)) {
+    return true;
+  }
+  let prefixLength = 0;
+  while (prefixLength < left.length && prefixLength < right.length && left[prefixLength] === right[prefixLength]) {
+    prefixLength += 1;
+  }
+  return prefixLength >= 18 && prefixLength >= Math.min(left.length, right.length) * 0.72;
+}
+
+function normalizePerplexityDisplayComparable(value) {
+  return cleanText(value)
+    .toLowerCase()
+    .replace(/\s+-\s+perplexity\s*$/i, "")
+    .replace(/[\s\p{P}\p{S}]+/gu, "");
 }
 
 function reindexMessage(message, index) {

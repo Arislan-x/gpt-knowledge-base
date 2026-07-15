@@ -447,7 +447,7 @@ function normalizeConversation(raw, sourceMeta) {
   const platform = platformMatch?.key || normalizeKey(raw.platform || inferred?.key || raw.platformLabel || raw.folderLabel || "external");
   const platformLabel = cleanText(raw.platformLabel || platformMatch?.label || inferred?.label || titleCase(platform));
   const messages = Array.isArray(raw.messages)
-    ? normalizeConversationMessages(raw.messages, platform)
+    ? normalizeConversationMessages(raw.messages, platform, raw.title)
     : [];
   if (!messages.length) {
     return null;
@@ -494,7 +494,7 @@ function normalizeConversation(raw, sourceMeta) {
   };
 }
 
-function normalizeConversationMessages(rawMessages, platform) {
+function normalizeConversationMessages(rawMessages, platform, title = "") {
   const normalized = rawMessages.map(normalizeMessage).filter(Boolean);
   let messages = normalized;
   if (platform === "kimi") {
@@ -512,6 +512,9 @@ function normalizeConversationMessages(rawMessages, platform) {
   if (platform === "wenxin") {
     messages = repairWenxinMessagesForDisplay(messages);
   }
+  if (platform === "perplexity") {
+    messages = repairPerplexityMessagesForDisplay(messages, title);
+  }
   if (platform === "chatgpt") {
     messages = repairChatGptThinkingMessages(messages);
   }
@@ -520,6 +523,71 @@ function normalizeConversationMessages(rawMessages, platform) {
     ...message,
     index
   }));
+}
+
+function repairPerplexityMessagesForDisplay(messages, title) {
+  if (messages.length !== 1 || messages[0]?.role === "user") {
+    return messages;
+  }
+
+  const text = cleanText(messages[0]?.text);
+  const paragraphs = text.split(/\n{2,}/).map(cleanText).filter(Boolean);
+  if (paragraphs.length < 2) {
+    return messages;
+  }
+
+  const userText = paragraphs[0];
+  if (!isPerplexityDisplayTitleMatch(userText, title)) {
+    return messages;
+  }
+
+  let answerParagraphs = paragraphs.slice(1);
+  if (answerParagraphs.length && isPerplexityDisplayTitleMatch(answerParagraphs[0], userText)) {
+    answerParagraphs = answerParagraphs.slice(1);
+  }
+  const assistantText = cleanText(answerParagraphs.join("\n\n"));
+  if (!assistantText) {
+    return messages;
+  }
+
+  return [
+    {
+      ...messages[0],
+      id: `perplexity-user-${hashString(userText.slice(0, 400))}`,
+      role: "user",
+      text: userText
+    },
+    {
+      ...messages[0],
+      id: `perplexity-assistant-${hashString(assistantText.slice(0, 400))}`,
+      role: "assistant",
+      text: assistantText
+    }
+  ];
+}
+
+function isPerplexityDisplayTitleMatch(value, title) {
+  const left = normalizePerplexityDisplayComparable(value);
+  const right = normalizePerplexityDisplayComparable(title);
+  if (left.length < 6 || right.length < 6) {
+    return false;
+  }
+  if (left === right || left.startsWith(right) || right.startsWith(left)) {
+    return true;
+  }
+
+  let prefixLength = 0;
+  while (prefixLength < left.length && prefixLength < right.length && left[prefixLength] === right[prefixLength]) {
+    prefixLength += 1;
+  }
+  return prefixLength >= 18 && prefixLength >= Math.min(left.length, right.length) * 0.72;
+}
+
+function normalizePerplexityDisplayComparable(value) {
+  return cleanText(value)
+    .toLowerCase()
+    .replace(/\s+-\s+perplexity\s*$/i, "")
+    .replace(/[\s\p{P}\p{S}]+/gu, "");
 }
 
 function normalizeMessage(raw, index) {

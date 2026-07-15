@@ -154,11 +154,9 @@
       conversationPatterns: [/\/search\/([^/?#]+)/, /\/spaces\/[^/]+\/[^/]+\/([^/?#]+)/],
       messageSources: [
         { selector: "[data-testid='user-message-bubble']", role: "user", minLength: 1 },
-        { selector: "[data-testid*='query' i]", role: "user", minLength: 1 },
-        { selector: "[data-testid*='answer' i]", role: "assistant", minLength: 1 },
-        { selector: "[class*='AnswerBody' i], [class*='AssistantMessage' i], .answer-text", role: "assistant", minLength: 1 },
-        { selector: "[data-testid*='message' i]", inferRole: true, minLength: 1 },
-        { selector: "article", inferRole: true, minLength: MIN_GENERIC_MESSAGE_LENGTH }
+        { selector: "[data-message-author-role='user'], [data-role='user'], [class~='group/query']", role: "user", minLength: 1 },
+        { selector: "[data-testid*='assistant-message' i], [data-message-author-role='assistant'], [data-role='assistant']", role: "assistant", minLength: 1 },
+        { selector: "[class~='group/answer'], [class*='AnswerBody' i], [class*='AssistantMessage' i], [id^='markdown-content-']", role: "assistant", minLength: 1 }
       ]
     },
     {
@@ -3429,26 +3427,192 @@
   }
 
   function collectPerplexityMessages() {
-    const userNodes = queryFirstVisibleSelector([
+    const userNodes = collectPerplexityRoleNodes([
       "[data-testid='user-message-bubble']",
       "[data-testid*='user-message' i]",
-      "[class*='UserMessage' i]",
-      ".my-md"
+      "[data-testid='query']",
+      "[data-testid='query-content']",
+      "[data-message-author-role='user']",
+      "[data-role='user']",
+      "[class~='group/query']",
+      "[class*='UserMessage' i]"
     ]);
-    const assistantNodes = queryFirstVisibleSelector([
+    const assistantNodes = collectPerplexityRoleNodes([
       "[data-testid*='assistant-message' i]",
+      "[data-message-author-role='assistant']",
+      "[data-role='assistant']",
+      "[data-testid='answer']",
+      "[data-testid^='answer-']",
+      "[class~='group/answer']",
       "[class*='AssistantMessage' i]",
       "[class*='AnswerBody' i]",
       ".answer-text",
-      ".prose",
-      "article",
-      "[data-testid*='answer' i]"
-    ], (node) => !isPerplexityChromeNode(node));
+      "[id^='markdown-content-']"
+    ]);
 
-    return finalizeExplicitRoleMessages([
+    const explicit = finalizeExplicitRoleMessages([
       ...userNodes.map((node) => ({ node, role: "user" })),
       ...assistantNodes.map((node) => ({ node, role: "assistant" }))
     ], "perplexity");
+
+    if (hasBothConversationRoles(explicit)) {
+      return explicit;
+    }
+
+    const anchored = collectPerplexityMessagesFromUserAnchors(userNodes);
+    if (hasBothConversationRoles(anchored)) {
+      return anchored;
+    }
+
+    const fallbackText = collectFallbackTranscript()[0]?.text || explicit[0]?.text || "";
+    const splitFallback = splitPerplexityCombinedTranscript(fallbackText);
+    if (hasBothConversationRoles(splitFallback)) {
+      return splitFallback;
+    }
+
+    return explicit;
+  }
+
+  function collectPerplexityRoleNodes(selectors) {
+    const seen = new Set();
+    const nodes = [];
+    for (const selector of selectors) {
+      for (const node of queryAllSafe(selector)) {
+        if (seen.has(node) || !isVisible(node) || isPerplexityChromeNode(node)) {
+          continue;
+        }
+        seen.add(node);
+        nodes.push(node);
+      }
+    }
+    return nodes.sort(compareNodeOrder);
+  }
+
+  function collectPerplexityMessagesFromUserAnchors(userNodes) {
+    const root = findConversationRoot();
+    if (!root) {
+      return [];
+    }
+
+    const prepared = userNodes
+      .filter((node) => root.contains(node))
+      .map((node) => ({ node, text: extractText(node) }))
+      .filter((entry) => isViableMessageText(entry.text, 1))
+      .filter((entry, index, entries) => !entries.some((other, otherIndex) => {
+        return index !== otherIndex && entry.node.contains(other.node) &&
+          (entry.text === other.text || entry.text.includes(other.text));
+      }))
+      .sort((a, b) => compareNodeOrder(a.node, b.node));
+
+    const messages = [];
+    for (let index = 0; index < prepared.length; index += 1) {
+      const user = prepared[index];
+      const nextUser = prepared[index + 1];
+      messages.push({
+        id: `perplexity-user-${index}-${hashString(user.text.slice(0, 400))}`,
+        role: "user",
+        text: user.text,
+        index: messages.length
+      });
+
+      const rangeText = extractRangeText(root, user.node, nextUser?.node || null);
+      const assistantText = cleanPerplexityAnswerRange(rangeText, user.text);
+      if (isViableMessageText(assistantText, MIN_GENERIC_MESSAGE_LENGTH)) {
+        messages.push({
+          id: `perplexity-assistant-${index}-${hashString(assistantText.slice(0, 400))}`,
+          role: "assistant",
+          text: assistantText,
+          index: messages.length
+        });
+      }
+    }
+    return messages;
+  }
+
+  function cleanPerplexityAnswerRange(value, userText) {
+    let text = normalizeText(value);
+    const normalizedUser = normalizeText(userText);
+    if (normalizedUser && text.startsWith(normalizedUser)) {
+      text = text.slice(normalizedUser.length).trim();
+    }
+
+    const lines = text.split("\n");
+    while (lines.length && /^(answer|response|回答|答案)\s*:?$/i.test(normalizeInlineMarkdown(lines[0]))) {
+      lines.shift();
+    }
+    while (lines.length && /^(related|related questions|keep exploring|follow[- ]?up|share|rewrite|追问|相关问题|继续探索)\s*:?$/i.test(normalizeInlineMarkdown(lines.at(-1)))) {
+      lines.pop();
+    }
+    return stripMessageControls(normalizeText(lines.join("\n")));
+  }
+
+  function splitPerplexityCombinedTranscript(value) {
+    const text = normalizeText(value);
+    const paragraphs = text.split(/\n{2,}/).map(normalizeText).filter(Boolean);
+    if (paragraphs.length < 2) {
+      return [];
+    }
+
+    const titleCandidates = [
+      getCleanDocumentTitle(),
+      document.querySelector("meta[property='og:title']")?.getAttribute("content") || "",
+      ...queryAllSafe("main h1, [role='main'] h1").slice(0, 3).map((node) => extractText(node))
+    ].map(normalizeText).filter(Boolean);
+    const userIndex = paragraphs.findIndex((paragraph) => {
+      return paragraph.length <= 2000 && titleCandidates.some((title) => isPerplexityTitleMatch(paragraph, title));
+    });
+    if (userIndex < 0 || userIndex >= paragraphs.length - 1) {
+      return [];
+    }
+
+    const userText = paragraphs[userIndex];
+    let answerParagraphs = paragraphs.slice(userIndex + 1);
+    if (answerParagraphs.length && isPerplexityTitleMatch(answerParagraphs[0], userText)) {
+      answerParagraphs = answerParagraphs.slice(1);
+    }
+    const assistantText = cleanPerplexityAnswerRange(answerParagraphs.join("\n\n"), userText);
+    if (!isViableMessageText(userText, 1) || !isViableMessageText(assistantText, MIN_GENERIC_MESSAGE_LENGTH)) {
+      return [];
+    }
+
+    return [
+      {
+        id: `perplexity-user-${hashString(userText.slice(0, 400))}`,
+        role: "user",
+        text: userText,
+        index: 0
+      },
+      {
+        id: `perplexity-assistant-${hashString(assistantText.slice(0, 400))}`,
+        role: "assistant",
+        text: assistantText,
+        index: 1
+      }
+    ];
+  }
+
+  function isPerplexityTitleMatch(value, title) {
+    const left = normalizePerplexityComparable(value);
+    const right = normalizePerplexityComparable(title);
+    if (left.length < 6 || right.length < 6) {
+      return false;
+    }
+    if (left === right || left.startsWith(right) || right.startsWith(left)) {
+      return true;
+    }
+
+    let prefixLength = 0;
+    while (prefixLength < left.length && prefixLength < right.length && left[prefixLength] === right[prefixLength]) {
+      prefixLength += 1;
+    }
+    return prefixLength >= 18 && prefixLength >= Math.min(left.length, right.length) * 0.72;
+  }
+
+  function normalizePerplexityComparable(value) {
+    return normalizeText(value)
+      .toLowerCase()
+      .replace(/\s+-\s+perplexity\s*$/i, "")
+      .replace(/[\s\p{P}\p{S}]+/gu, "");
   }
 
   function isPerplexityChromeNode(node) {
