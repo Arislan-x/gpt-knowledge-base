@@ -1,0 +1,9 @@
+# Changelog
+
+## 1.3.1 - 2026-07-16
+
+- Expanded and hardened cross-platform conversation capture and role recovery.
+- Refined the popup and workstation layouts, themes, fonts, native tooltips, and supported-platform presentation.
+- Added Markdown, JSON, HTML, merged-file, and ZIP export workflows.
+- Added local folder import, source-aware browsing, Markdown/LaTeX/code rendering, thinking collapse, and user-question navigation.
+- Added localized Chrome metadata, branded toolbar icons, privacy disclosures, store-listing material, and a reproducible release package.

@@ -1,6 +1,6 @@
 # GPT Knowledge Base
 
-[简体中文](README.md) | [English](README_EN.md)
+[简体中文](README.md) | [English](README_EN.md) | [Privacy Policy](PRIVACY_EN.md)
 
 > Unify AI conversations into a RAG knowledge base
 
@@ -32,9 +32,9 @@ In one sentence:
 - Provides a live-backup switch in the popup so capture can be paused for the current browsing session.
 - Supports Chinese and English interfaces, open-source font stacks, and Morandi-inspired themes.
 - Combines browser backups with a user-selected external backup folder while clearly marking each source.
-- Renders role-based bubbles, Markdown, tables, code blocks, copyable code, collapsed thinking, and user-question navigation in the workstation.
-- Exports individual conversations as Markdown or JSON.
-- Exports all local conversations as Markdown or JSON.
+- Renders role-based bubbles, Markdown, tables, code blocks, LaTeX formulas, copyable code, collapsed thinking, and user-question navigation in the workstation.
+- Exports individual conversations as Markdown, JSON, or HTML.
+- Exports all local conversations as merged Markdown, JSON, or HTML, or as a per-conversation ZIP archive.
 - Deletes individual or all browser-stored conversations.
 - Links supported platform names and available official logos to their respective websites for nominative reference only.
 
@@ -58,15 +58,6 @@ The extension creates a separate logical group for each supported platform:
 - Hugging Face Chat: `huggingface.co/chat`, `hf.co/chat`
 
 These are logical groups inside extension storage, not operating-system folders.
-
-## Compatibility Levels
-
-- Fully adapted: ChatGPT, Claude, Gemini, Kimi, and Qwen.
-- Relatively complete capture with limited visual reconstruction: Doubao and Perplexity.
-- Backup, capture, and role-based segmentation: DeepSeek. The active branch is rebuilt from the current-conversation response when available, with DOM extraction as a fallback.
-- On the current Yiyan interface, a response can be split into a reasoning block and a final message. The extension merges the reasoning into one collapsed block and treats the following message as the final answer.
-
-Other platforms use dedicated selectors where available and generic fallbacks otherwise. Completeness can change when a platform updates its page structure.
 
 ## Installation and Testing
 
@@ -95,6 +86,8 @@ Chrome extensions cannot silently access arbitrary local paths. The user must ex
 Data is stored in the local browser profile by default. The extension does not upload conversation content to any cloud endpoint.
 
 Only the currently open conversation is backed up. The extension does not proactively fetch historical conversation lists. External folders are read only after the user explicitly selects them.
+
+See the [Privacy Policy](PRIVACY_EN.md) for the complete data-handling and permission disclosures.
 
 ## RAG Knowledge-Base Direction
 

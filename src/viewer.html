@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>GPT Knowledge Base</title>
+    <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
     <link rel="stylesheet" href="viewer.css">
   </head>
   <body>
@@ -22,19 +23,6 @@
           </div>
         </header>
 
-        <section class="source-controls" aria-label="Backup sources">
-          <button id="chooseFolderButton" class="primary" type="button">Choose Folder</button>
-          <button id="clearFolderButton" type="button">Clear Folder</button>
-          <button id="exportAllJsonButton" type="button">Export all JSON</button>
-          <button id="exportAllMarkdownButton" type="button">Export all Markdown</button>
-          <button id="clearAllButton" class="danger source-wide" type="button">Clear local backups</button>
-          <input id="folderFallbackInput" type="file" accept=".json,.md,.markdown,application/json,text/markdown" webkitdirectory multiple hidden>
-        </section>
-
-        <section class="search-box" aria-label="Search">
-          <input id="searchInput" type="search" placeholder="Search backups" autocomplete="off">
-        </section>
-
         <section class="summary-grid" aria-label="Summary">
           <div>
             <span id="conversationCount">0</span>
@@ -44,6 +32,17 @@
             <span id="messageCount">0</span>
             <small id="messageCountLabel">messages</small>
           </div>
+        </section>
+
+        <section class="source-controls" aria-label="Backup sources">
+          <button id="importButton" class="primary" type="button">Import</button>
+          <button id="exportButton" type="button">Export</button>
+          <button id="clearWorkspaceButton" class="danger" type="button">Clear</button>
+          <input id="folderFallbackInput" type="file" accept=".json,.md,.markdown,application/json,text/markdown" webkitdirectory multiple hidden>
+        </section>
+
+        <section class="search-box" aria-label="Search">
+          <input id="searchInput" type="search" placeholder="Search backups" autocomplete="off">
         </section>
 
         <nav class="folder-nav" aria-label="Folders">
@@ -83,11 +82,35 @@
                   <span id="themeLabel" class="sr-only">Theme</span>
                   <select id="themeSelect"></select>
                 </label>
+                <div class="platform-help">
+                  <button id="supportedPlatformsButton" class="platform-help-trigger" type="button" aria-label="Supported GPTs">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    <span class="sr-only">Supported GPTs</span>
+                  </button>
+                  <section class="platform-popover" aria-labelledby="supportedPlatformsTitle">
+                    <div class="platform-popover-surface">
+                      <div class="supported-popover-copy">
+                        <h3 id="supportedPlatformsTitle">Supported GPTs</h3>
+                        <p id="trademarkNotice">Names and logos are used only as nominative links; trademarks belong to their owners.</p>
+                      </div>
+                      <div id="supportedPlatformList" class="supported-platform-list" aria-label="Supported GPT official links"></div>
+                    </div>
+                  </section>
+                </div>
               </div>
-              <button id="openSourceButton" type="button">Open Source</button>
-              <button id="exportMarkdownButton" type="button">Export MD</button>
-              <button id="exportJsonButton" type="button">Export JSON</button>
-              <button id="deleteConversationButton" class="danger" type="button">Delete</button>
+              <div class="conversation-actions" aria-label="Conversation actions">
+                <button id="openSourceButton" class="conversation-action icon-only" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  <span class="sr-only">Open original website</span>
+                </button>
+                <button id="exportMarkdownButton" class="conversation-action" type="button"><span class="action-label">MD</span></button>
+                <button id="exportJsonButton" class="conversation-action" type="button"><span class="action-label">JSON</span></button>
+                <button id="exportHtmlButton" class="conversation-action" type="button"><span class="action-label">HTML</span></button>
+                <button id="deleteConversationButton" class="conversation-action icon-only danger" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>
+                  <span class="sr-only">Delete this conversation</span>
+                </button>
+              </div>
             </div>
           </header>
 
@@ -98,19 +121,52 @@
             <p>Open a supported AI chat page, or choose a local backup folder containing exported JSON or Markdown files for RAG knowledge-base preparation.</p>
           </section>
         </div>
-
-        <footer class="supported-footer" aria-labelledby="supportedPlatformsTitle">
-          <div class="supported-footer-copy">
-            <h3 id="supportedPlatformsTitle">Supported GPTs</h3>
-            <p id="compatibilityNotice">Compatibility: ChatGPT, Claude, Gemini, Kimi, and Qwen are fully adapted; DeepSeek supports backup, capture, and role-based segmentation; Doubao and Perplexity capture relatively complete data but cannot be faithfully reconstructed.</p>
-            <p id="trademarkNotice">Names and logos are used only as nominative links; trademarks belong to their owners.</p>
-          </div>
-          <div id="supportedPlatformList" class="supported-platform-list" aria-label="Supported GPT official links"></div>
-        </footer>
       </main>
     </div>
 
+    <dialog id="exportDialog" class="export-dialog" aria-labelledby="exportDialogTitle">
+      <form id="exportForm" class="export-dialog-surface" method="dialog">
+        <header class="export-dialog-header">
+          <div>
+            <p class="dialog-kicker">GPT Knowledge Base</p>
+            <h2 id="exportDialogTitle">Export conversations</h2>
+          </div>
+          <button id="closeExportDialogButton" class="dialog-close icon-only" type="button" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </header>
+
+        <fieldset class="export-fieldset">
+          <legend id="exportFormatLabel">Format</legend>
+          <div class="export-options format-options">
+            <label><input type="radio" name="exportFormat" value="json" checked><span>JSON</span></label>
+            <label><input type="radio" name="exportFormat" value="markdown"><span>MD</span></label>
+            <label><input type="radio" name="exportFormat" value="html"><span>HTML</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="export-fieldset">
+          <legend id="exportPackagingLabel">Packaging</legend>
+          <div class="export-options packaging-options">
+            <label><input type="radio" name="exportPackaging" value="single" checked><span id="exportSingleFileLabel">Merge into one file</span></label>
+            <label><input type="radio" name="exportPackaging" value="zip"><span id="exportZipLabel">Export ZIP</span></label>
+          </div>
+        </fieldset>
+
+        <footer class="export-dialog-actions">
+          <button id="cancelExportButton" type="button">Cancel</button>
+          <button id="confirmExportButton" class="primary" type="button">Export</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <script src="../assets/vendor/katex/katex.min.js"></script>
+    <script src="../assets/vendor/katex/contrib/mhchem.min.js"></script>
+    <script src="../assets/vendor/katex/contrib/auto-render.min.js"></script>
+    <script src="../assets/vendor/katex/contrib/copy-tex.min.js"></script>
     <script src="preferences.js"></script>
+    <script src="export-html.js"></script>
+    <script src="export-zip.js"></script>
     <script src="viewer.js"></script>
   </body>
 </html>

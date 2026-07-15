@@ -1,0 +1,11 @@
+{
+  "extensionName": {
+    "message": "GPT 知识库"
+  },
+  "extensionShortName": {
+    "message": "GPT 知识库"
+  },
+  "extensionDescription": {
+    "message": "跨平台实时备份当前 AI 会话，在本地工作站中浏览、整理并导出为可追溯的 RAG 知识资料。"
+  }
+}

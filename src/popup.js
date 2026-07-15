@@ -38,26 +38,16 @@ const elements = {
   themeLabel: document.querySelector("#themeLabel"),
   themeSelect: document.querySelector("#themeSelect"),
   backupSwitchLabel: document.querySelector("#backupSwitchLabel"),
+  captureCard: document.querySelector("#captureCard"),
   captureToggle: document.querySelector("#captureToggle"),
   captureStatus: document.querySelector("#captureStatus"),
   localPrivacyNote: document.querySelector("#localPrivacyNote"),
   openVaultButton: document.querySelector("#openVaultButton"),
-  searchInput: document.querySelector("#searchInput"),
   exportJsonButton: document.querySelector("#exportJsonButton"),
   exportMarkdownButton: document.querySelector("#exportMarkdownButton"),
-  clearButton: document.querySelector("#clearButton"),
-  backupListTitle: document.querySelector("#backupListTitle"),
-  listSummary: document.querySelector("#listSummary"),
-  expandGroupsButton: document.querySelector("#expandGroupsButton"),
-  collapseGroupsButton: document.querySelector("#collapseGroupsButton"),
-  toggleListButton: document.querySelector("#toggleListButton"),
-  conversationCount: document.querySelector("#conversationCount"),
-  conversationCountLabel: document.querySelector("#conversationCountLabel"),
-  messageCount: document.querySelector("#messageCount"),
-  messageCountLabel: document.querySelector("#messageCountLabel"),
-  conversationList: document.querySelector("#conversationList"),
+  exportHtmlButton: document.querySelector("#exportHtmlButton"),
   detailPanel: document.querySelector("#detailPanel"),
-  emptyState: document.querySelector("#emptyState"),
+  supportedStrip: document.querySelector("#supportedStrip"),
   supportedPlatformsTitle: document.querySelector("#supportedPlatformsTitle"),
   trademarkNotice: document.querySelector("#trademarkNotice"),
   supportedIconList: document.querySelector("#supportedIconList")
@@ -66,11 +56,6 @@ const elements = {
 let state = {
   index: [],
   conversations: [],
-  selectedId: "",
-  query: "",
-  listCollapsed: false,
-  detailCollapsed: false,
-  collapsedGroups: new Set(),
   preferences: { ...PREFS.DEFAULT_PREFERENCES },
   settings: { ...DEFAULT_SETTINGS },
   activeTab: null
@@ -80,29 +65,9 @@ document.addEventListener("DOMContentLoaded", initialize);
 elements.openVaultButton.addEventListener("click", () => {
   chrome.tabs.create({ url: chrome.runtime.getURL("src/viewer.html") });
 });
-elements.searchInput.addEventListener("input", () => {
-  state.query = elements.searchInput.value.trim().toLowerCase();
-  render();
-});
-elements.exportJsonButton.addEventListener("click", () => exportAll("json"));
-elements.exportMarkdownButton.addEventListener("click", () => exportAll("markdown"));
-elements.clearButton.addEventListener("click", clearBackups);
-elements.toggleListButton.addEventListener("click", () => {
-  state.listCollapsed = !state.listCollapsed;
-  render();
-});
-elements.expandGroupsButton.addEventListener("click", () => {
-  state.listCollapsed = false;
-  state.collapsedGroups.clear();
-  render();
-});
-elements.collapseGroupsButton.addEventListener("click", () => {
-  state.listCollapsed = false;
-  for (const group of groupByFolder(getVisibleIndex())) {
-    state.collapsedGroups.add(group.id);
-  }
-  render();
-});
+elements.exportJsonButton.addEventListener("click", () => exportCurrentPage("json"));
+elements.exportMarkdownButton.addEventListener("click", () => exportCurrentPage("markdown"));
+elements.exportHtmlButton.addEventListener("click", () => exportCurrentPage("html"));
 elements.languageSelect.addEventListener("change", () => updatePreferences({ language: elements.languageSelect.value }));
 elements.fontSelect.addEventListener("change", () => updatePreferences({ font: elements.fontSelect.value }));
 elements.themeSelect.addEventListener("change", () => updatePreferences({ theme: elements.themeSelect.value }));
@@ -174,22 +139,26 @@ function applyStaticText() {
   elements.fontLabel.closest(".icon-select").setAttribute("aria-label", tr("font"));
   elements.themeLabel.closest(".icon-select").setAttribute("aria-label", tr("theme"));
   elements.openVaultButton.textContent = tr("openVault");
-  elements.searchInput.placeholder = tr("searchConversations");
   elements.exportJsonButton.textContent = tr("exportJson");
-  elements.exportMarkdownButton.textContent = tr("exportMarkdown");
-  elements.clearButton.textContent = tr("clear");
-  elements.backupListTitle.textContent = tr("searchResults");
-  elements.expandGroupsButton.textContent = tr("expand");
-  elements.collapseGroupsButton.textContent = tr("fold");
-  elements.conversationCountLabel.textContent = tr("conversations");
-  elements.messageCountLabel.textContent = tr("messages");
-  elements.emptyState.textContent = tr("emptyPopup");
+  elements.exportMarkdownButton.textContent = "MD";
+  elements.exportHtmlButton.textContent = "HTML";
+  setPopupTooltip(elements.exportJsonButton, tr("exportCurrentJsonTooltip"));
+  setPopupTooltip(elements.exportMarkdownButton, tr("exportCurrentMdTooltip"));
+  setPopupTooltip(elements.exportHtmlButton, tr("exportCurrentHtmlTooltip"));
   elements.backupSwitchLabel.textContent = tr("backupSwitch");
   elements.localPrivacyNote.textContent = tr("localPrivacyNote");
+  elements.captureCard.title = tr("localPrivacyNote");
   elements.supportedPlatformsTitle.textContent = tr("supportedPlatforms");
   elements.trademarkNotice.textContent = tr("trademarkNotice");
+  elements.supportedStrip.title = tr("supportedPlatformsTooltip");
+  elements.supportedStrip.setAttribute("aria-label", tr("supportedPlatformsTooltip"));
   syncCaptureToggle();
   renderSupportedPlatforms();
+}
+
+function setPopupTooltip(button, tooltip) {
+  button.title = tooltip;
+  button.setAttribute("aria-label", tooltip);
 }
 
 async function loadSettingsAndRender(options = {}) {
@@ -277,163 +246,24 @@ async function loadAndRender() {
     return normalizeConversationForPopup(conversations[CONVERSATION_PREFIX + item.id] || item, item);
   });
 
-  if (state.selectedId && !state.conversations.some((item) => item.id === state.selectedId)) {
-    state.selectedId = "";
-  }
   render();
 }
 
 function render() {
-  const hasQuery = Boolean(state.query);
-  const visible = hasQuery ? getVisibleIndex() : [];
-  const groups = groupByFolder(visible);
   const totalMessages = state.conversations.reduce((sum, item) => sum + Number(item.messageCount || 0), 0);
-  const listSection = elements.conversationList.closest(".list-section");
-
-  if (hasQuery && visible.length && !visible.some((item) => item.id === state.selectedId)) {
-    state.selectedId = visible[0].id;
-  }
-  if (!hasQuery || !visible.length) {
-    state.selectedId = "";
-  }
-
-  elements.conversationCount.textContent = String(state.conversations.length);
-  elements.messageCount.textContent = String(totalMessages);
   elements.statusText.textContent = getStatusText(state.conversations);
   elements.summaryText.textContent = tr("popupSummary", {
     conversations: state.conversations.length,
     messages: totalMessages
   });
-  elements.listSummary.textContent = tr("listSummary", { groups: groups.length, conversations: visible.length });
-  elements.toggleListButton.textContent = state.listCollapsed ? tr("show") : tr("hide");
-  elements.conversationList.classList.toggle("is-collapsed", state.listCollapsed);
-  if (listSection) {
-    listSection.hidden = !hasQuery;
-  }
-  elements.emptyState.textContent = hasQuery ? tr("noSearchResults") : tr("emptyPopup");
-  elements.emptyState.hidden = !hasQuery || state.listCollapsed || visible.length > 0;
-
-  elements.conversationList.replaceChildren(...renderGroupedConversationItems(groups));
-
   renderDetail();
-}
-
-function getVisibleIndex() {
-  if (!state.query) {
-    return [];
-  }
-
-  return state.conversations.filter((item) => {
-    return [item.title, item.sourceHost, item.sourceUrl, getFolderLabel(item), getPlatformLabel(item), ...getMessageSearchText(item)]
-      .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(state.query));
-  });
-}
-
-function getMessageSearchText(conversation) {
-  return Array.isArray(conversation?.messages)
-    ? conversation.messages.map((message) => message.text || message.content || "")
-    : [];
-}
-
-function renderGroupedConversationItems(groups) {
-  const nodes = [];
-
-  for (const group of groups) {
-    nodes.push(renderFolderHeader(group));
-    nodes.push(renderFolderBody(group));
-  }
-
-  return nodes;
-}
-
-function renderFolderHeader(group) {
-  const li = document.createElement("li");
-  li.className = "folder-header";
-
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "folder-toggle";
-  button.setAttribute("aria-expanded", String(!state.collapsedGroups.has(group.id)));
-  button.addEventListener("click", () => {
-    if (state.collapsedGroups.has(group.id)) {
-      state.collapsedGroups.delete(group.id);
-    } else {
-      state.collapsedGroups.add(group.id);
-    }
-    render();
-  });
-
-  const caret = document.createElement("span");
-  caret.className = "folder-caret";
-  caret.textContent = state.collapsedGroups.has(group.id) ? ">" : "v";
-
-  const title = document.createElement("span");
-  title.textContent = localizePlatformName(group.id, group.label);
-
-  const count = document.createElement("small");
-  count.textContent = tr("groupConversationCount", { count: group.items.length });
-
-  button.append(caret, title, count);
-  li.append(button);
-  return li;
-}
-
-function renderFolderBody(group) {
-  const li = document.createElement("li");
-  li.className = "folder-group-body";
-  if (state.collapsedGroups.has(group.id)) {
-    li.classList.add("is-collapsed");
-    return li;
-  }
-
-  const list = document.createElement("ul");
-  list.className = "conversation-group-list";
-  list.replaceChildren(...group.items.map(renderConversationItem));
-  li.append(list);
-  return li;
-}
-
-function renderConversationItem(item) {
-  const li = document.createElement("li");
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "conversation-item";
-  if (item.id === state.selectedId) {
-    button.classList.add("is-selected");
-  }
-  button.addEventListener("click", () => {
-    state.selectedId = item.id;
-    state.detailCollapsed = false;
-    render();
-  });
-  button.addEventListener("dblclick", () => {
-    if (item.sourceUrl) {
-      chrome.tabs.create({ url: item.sourceUrl });
-    }
-  });
-
-  const textWrap = document.createElement("span");
-  const title = document.createElement("span");
-  title.className = "conversation-title";
-  title.textContent = item.title || tr("untitledConversation");
-
-  const meta = document.createElement("span");
-  meta.className = "conversation-meta";
-  meta.textContent = `${formatDate(item.updatedAt)} - ${item.sourceHost || getFolderLabel(item)}`;
-
-  const count = document.createElement("span");
-  count.className = "count-pill";
-  count.textContent = String(item.messageCount || 0);
-
-  textWrap.append(title, meta);
-  button.append(textWrap, count);
-  li.append(button);
-  return li;
 }
 
 function renderDetail() {
   const conversation = getCurrentPageConversation();
+  elements.exportJsonButton.disabled = !conversation;
+  elements.exportMarkdownButton.disabled = !conversation;
+  elements.exportHtmlButton.disabled = !conversation;
 
   const copy = document.createElement("div");
   copy.className = "current-backup-copy";
@@ -575,14 +405,6 @@ function createButton(label, onClick, className = "") {
   }
   button.addEventListener("click", onClick);
   return button;
-}
-
-async function getConversation(id) {
-  return state.conversations.find((conversation) => conversation.id === id) || null;
-}
-
-async function getAllConversations() {
-  return state.conversations.slice();
 }
 
 function normalizeConversationForPopup(raw, metadata = {}) {
@@ -809,7 +631,20 @@ function repairGeminiMessagesForDisplay(messages) {
     });
   }
 
-  return repaired;
+  return mergeAdjacentGeminiUserMessages(repaired);
+}
+
+function mergeAdjacentGeminiUserMessages(messages) {
+  const merged = [];
+  for (const message of messages || []) {
+    const previous = merged[merged.length - 1];
+    if (previous && previous.role === "user" && message.role === "user") {
+      previous.text = cleanText(`${previous.text}\n${message.text}`);
+      continue;
+    }
+    merged.push({ ...message });
+  }
+  return merged.map(reindexMessage);
 }
 
 function stripGeminiSpeakerText(text, role) {
@@ -1023,7 +858,23 @@ function repairKimiMessagesForDisplay(messages) {
     });
   }
 
-  return repaired;
+  return repairFirstKimiMultilinePrompt(repaired);
+}
+
+function repairFirstKimiMultilinePrompt(messages) {
+  if (messages.length < 3 ||
+      messages[0].role !== "assistant" ||
+      messages[1].role !== "user" ||
+      messages[2].role !== "assistant") {
+    return messages;
+  }
+
+  const firstUserMessage = {
+    ...messages[1],
+    id: `${messages[0].id || "kimi-first-prompt"}-${messages[1].id || "continued"}`,
+    text: cleanText(`${messages[0].text}\n${messages[1].text}`)
+  };
+  return [firstUserMessage, ...messages.slice(2)].map(reindexMessage);
 }
 
 function repairDoubaoMessagesForDisplay(messages) {
@@ -1227,9 +1078,13 @@ function splitKimiByActionMarkers(lines, markerIndexes) {
 
   for (const markerIndex of markerIndexes) {
     const segment = cleanText(lines.slice(start, markerIndex).join("\n"));
-    const split = splitKimiSegmentBeforeAction(segment);
-    addKimiPart(parts, "assistant", split.assistant);
-    addKimiPart(parts, "user", split.user);
+    if (start === 0 && parts.length === 0) {
+      addKimiPart(parts, "user", segment);
+    } else {
+      const split = splitKimiSegmentBeforeAction(segment);
+      addKimiPart(parts, "assistant", split.assistant);
+      addKimiPart(parts, "user", split.user);
+    }
     start = markerIndex + 1;
   }
 
@@ -1422,51 +1277,39 @@ function isMessageControlLine(line) {
   return pattern.test(value);
 }
 
-async function exportAll(format) {
-  const conversations = await getAllConversations();
-  if (!conversations.length) {
+function exportCurrentPage(format) {
+  const conversation = getCurrentPageConversation();
+  if (!conversation) {
     return;
   }
 
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   if (format === "json") {
     downloadFile(
-      `gpt-knowledge-base-${stamp}.json`,
-      JSON.stringify({
-        exportedAt: new Date().toISOString(),
-        folders: summarizeFolders(conversations),
-        conversations
-      }, null, 2),
+      `${safeFileName(conversation.title)}.json`,
+      JSON.stringify(conversation, null, 2),
       "application/json"
     );
     return;
   }
 
+  if (format === "html") {
+    downloadFile(
+      `${safeFileName(conversation.title)}.html`,
+      window.CBV_HTML_EXPORT.conversationToHtml(conversation, {
+        language: state.preferences.language,
+        platformLabel: getPlatformLabel(conversation),
+        folderLabel: getFolderLabel(conversation)
+      }),
+      "text/html"
+    );
+    return;
+  }
+
   downloadFile(
-    `gpt-knowledge-base-${stamp}.md`,
-    conversations.map(conversationToMarkdown).join("\n\n---\n\n"),
+    `${safeFileName(conversation.title)}.md`,
+    conversationToMarkdown(conversation),
     "text/markdown"
   );
-}
-
-async function clearBackups() {
-  if (!state.index.length) {
-    return;
-  }
-  if (!confirm(tr("deleteAllConfirm"))) {
-    return;
-  }
-
-  const keys = state.index.map((item) => CONVERSATION_PREFIX + item.id);
-  keys.push(INDEX_KEY);
-  await chrome.storage.local.remove(keys);
-  await chrome.storage.local.set({ [INDEX_KEY]: [] });
-  state.index = [];
-  state.conversations = [];
-  state.selectedId = "";
-  state.collapsedGroups.clear();
-  state.detailCollapsed = false;
-  render();
 }
 
 async function deleteConversation(id) {
@@ -1482,8 +1325,6 @@ async function deleteConversation(id) {
   state.index = state.index.filter((entry) => entry.id !== id);
   state.conversations = state.conversations.filter((entry) => entry.id !== id);
   await chrome.storage.local.set({ [INDEX_KEY]: state.index });
-  state.selectedId = "";
-  state.detailCollapsed = false;
   render();
 }
 
@@ -1636,16 +1477,6 @@ function groupByFolder(items) {
   }
 
   return Array.from(groups.values()).sort((a, b) => String(b.latest).localeCompare(String(a.latest)));
-}
-
-function summarizeFolders(conversations) {
-  return groupByFolder(conversations).map((group) => ({
-    id: group.id,
-    label: group.label,
-    conversationCount: group.items.length,
-    messageCount: group.items.reduce((sum, item) => sum + Number(item.messageCount || 0), 0),
-    updatedAt: group.latest || null
-  }));
 }
 
 function getFolderId(item) {

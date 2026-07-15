@@ -27,6 +27,8 @@ const ROLE_LABELS = {
   unknown: "Message"
 };
 
+let latexMacros = {};
+
 const PREFS = window.CBV_PREFERENCES;
 
 const elements = {
@@ -39,11 +41,20 @@ const elements = {
   fontSelect: document.querySelector("#fontSelect"),
   themeLabel: document.querySelector("#themeLabel"),
   themeSelect: document.querySelector("#themeSelect"),
-  chooseFolderButton: document.querySelector("#chooseFolderButton"),
-  clearFolderButton: document.querySelector("#clearFolderButton"),
-  exportAllJsonButton: document.querySelector("#exportAllJsonButton"),
-  exportAllMarkdownButton: document.querySelector("#exportAllMarkdownButton"),
-  clearAllButton: document.querySelector("#clearAllButton"),
+  supportedPlatformsButton: document.querySelector("#supportedPlatformsButton"),
+  importButton: document.querySelector("#importButton"),
+  exportButton: document.querySelector("#exportButton"),
+  clearWorkspaceButton: document.querySelector("#clearWorkspaceButton"),
+  exportDialog: document.querySelector("#exportDialog"),
+  exportForm: document.querySelector("#exportForm"),
+  exportDialogTitle: document.querySelector("#exportDialogTitle"),
+  exportFormatLabel: document.querySelector("#exportFormatLabel"),
+  exportPackagingLabel: document.querySelector("#exportPackagingLabel"),
+  exportSingleFileLabel: document.querySelector("#exportSingleFileLabel"),
+  exportZipLabel: document.querySelector("#exportZipLabel"),
+  closeExportDialogButton: document.querySelector("#closeExportDialogButton"),
+  cancelExportButton: document.querySelector("#cancelExportButton"),
+  confirmExportButton: document.querySelector("#confirmExportButton"),
   folderFallbackInput: document.querySelector("#folderFallbackInput"),
   searchInput: document.querySelector("#searchInput"),
   conversationCount: document.querySelector("#conversationCount"),
@@ -59,12 +70,12 @@ const elements = {
   openSourceButton: document.querySelector("#openSourceButton"),
   exportMarkdownButton: document.querySelector("#exportMarkdownButton"),
   exportJsonButton: document.querySelector("#exportJsonButton"),
+  exportHtmlButton: document.querySelector("#exportHtmlButton"),
   deleteConversationButton: document.querySelector("#deleteConversationButton"),
   messageList: document.querySelector("#messageList"),
   userProgress: document.querySelector("#userProgress"),
   emptyState: document.querySelector("#emptyState"),
   supportedPlatformsTitle: document.querySelector("#supportedPlatformsTitle"),
-  compatibilityNotice: document.querySelector("#compatibilityNotice"),
   trademarkNotice: document.querySelector("#trademarkNotice"),
   supportedPlatformList: document.querySelector("#supportedPlatformList")
 };
@@ -86,11 +97,17 @@ document.addEventListener("DOMContentLoaded", initialize);
 elements.languageSelect.addEventListener("change", () => updatePreferences({ language: elements.languageSelect.value }));
 elements.fontSelect.addEventListener("change", () => updatePreferences({ font: elements.fontSelect.value }));
 elements.themeSelect.addEventListener("change", () => updatePreferences({ theme: elements.themeSelect.value }));
-elements.chooseFolderButton.addEventListener("click", chooseExternalFolder);
-elements.clearFolderButton.addEventListener("click", clearExternalFolder);
-elements.exportAllJsonButton.addEventListener("click", () => exportAll("json"));
-elements.exportAllMarkdownButton.addEventListener("click", () => exportAll("markdown"));
-elements.clearAllButton.addEventListener("click", clearLocalBackups);
+elements.importButton.addEventListener("click", chooseExternalFolder);
+elements.exportButton.addEventListener("click", openExportDialog);
+elements.clearWorkspaceButton.addEventListener("click", clearWorkspace);
+elements.closeExportDialogButton.addEventListener("click", closeExportDialog);
+elements.cancelExportButton.addEventListener("click", closeExportDialog);
+elements.confirmExportButton.addEventListener("click", confirmExportAll);
+elements.exportDialog.addEventListener("click", (event) => {
+  if (event.target === elements.exportDialog) {
+    closeExportDialog();
+  }
+});
 elements.folderFallbackInput.addEventListener("change", handleFallbackFiles);
 elements.searchInput.addEventListener("input", () => {
   state.query = elements.searchInput.value.trim().toLowerCase();
@@ -99,6 +116,7 @@ elements.searchInput.addEventListener("input", () => {
 elements.openSourceButton.addEventListener("click", openSelectedSource);
 elements.exportMarkdownButton.addEventListener("click", () => exportSelected("markdown"));
 elements.exportJsonButton.addEventListener("click", () => exportSelected("json"));
+elements.exportHtmlButton.addEventListener("click", () => exportSelected("html"));
 elements.deleteConversationButton.addEventListener("click", deleteSelectedConversation);
 elements.messageList.addEventListener("scroll", updateUserProgressActive);
 
@@ -165,24 +183,73 @@ function applyStaticText() {
   elements.languageLabel.closest(".icon-select").setAttribute("aria-label", tr("language"));
   elements.fontLabel.closest(".icon-select").setAttribute("aria-label", tr("font"));
   elements.themeLabel.closest(".icon-select").setAttribute("aria-label", tr("theme"));
-  elements.chooseFolderButton.textContent = tr("chooseFolder");
-  elements.clearFolderButton.textContent = tr("clearFolder");
-  elements.exportAllJsonButton.textContent = tr("exportAllJson");
-  elements.exportAllMarkdownButton.textContent = tr("exportAllMarkdown");
-  elements.clearAllButton.textContent = tr("clearLocalBackups");
+  elements.supportedPlatformsButton.title = tr("supportedPlatforms");
+  elements.supportedPlatformsButton.setAttribute("aria-label", tr("supportedPlatforms"));
+  elements.supportedPlatformsButton.querySelector(".sr-only").textContent = tr("supportedPlatforms");
+  elements.importButton.textContent = tr("importBackups");
+  elements.exportButton.textContent = tr("exportBackups");
+  elements.clearWorkspaceButton.textContent = tr("clearWorkspace");
+  setTooltip(elements.importButton, tr("importBackupsTooltip"));
+  setTooltip(elements.exportButton, tr("exportBackupsTooltip"));
+  setTooltip(elements.clearWorkspaceButton, tr("clearWorkspaceTooltip"));
+  elements.exportDialogTitle.textContent = tr("exportDialogTitle");
+  elements.exportFormatLabel.textContent = tr("exportFormatLabel");
+  elements.exportPackagingLabel.textContent = tr("exportPackagingLabel");
+  elements.exportSingleFileLabel.textContent = tr("exportSingleFileLabel");
+  elements.exportZipLabel.textContent = tr("exportZipLabel");
+  elements.cancelExportButton.textContent = tr("cancel");
+  elements.confirmExportButton.textContent = tr("confirmExport");
+  elements.closeExportDialogButton.setAttribute("aria-label", tr("close"));
   elements.searchInput.placeholder = tr("searchBackups");
   elements.conversationCountLabel.textContent = tr("conversations");
   elements.messageCountLabel.textContent = tr("messages");
-  elements.openSourceButton.textContent = tr("openSource");
-  elements.exportMarkdownButton.textContent = tr("exportMd");
-  elements.exportJsonButton.textContent = tr("exportJson");
-  elements.deleteConversationButton.textContent = tr("delete");
+  setConversationActionLabel(elements.openSourceButton, tr("openSourceTooltip"));
+  setConversationActionLabel(elements.exportMarkdownButton, tr("exportSingleMdTooltip"), "MD");
+  setConversationActionLabel(elements.exportJsonButton, tr("exportSingleJsonTooltip"), "JSON");
+  setConversationActionLabel(elements.exportHtmlButton, tr("exportSingleHtmlTooltip"), "HTML");
+  setConversationActionLabel(elements.deleteConversationButton, tr("deleteSingleConversationTooltip"));
   elements.emptyState.querySelector("h3").textContent = tr("noBackupSelected");
   elements.emptyState.querySelector("p").textContent = tr("noBackupSelectedHint");
   elements.supportedPlatformsTitle.textContent = tr("supportedPlatforms");
-  elements.compatibilityNotice.textContent = tr("compatibilityNotice");
   elements.trademarkNotice.textContent = tr("trademarkNotice");
   renderSupportedPlatforms();
+}
+
+function setConversationActionLabel(button, tooltip, visibleLabel = "") {
+  button.title = tooltip;
+  button.setAttribute("aria-label", tooltip);
+  const screenReaderLabel = button.querySelector(".sr-only");
+  if (screenReaderLabel) {
+    screenReaderLabel.textContent = tooltip;
+  }
+  const actionLabel = button.querySelector(".action-label");
+  if (actionLabel) {
+    actionLabel.textContent = visibleLabel;
+  }
+}
+
+function setTooltip(element, tooltip) {
+  element.title = tooltip;
+  element.setAttribute("aria-label", tooltip);
+}
+
+function openExportDialog() {
+  if (!getCombinedConversations().length) {
+    return;
+  }
+  elements.exportDialog.showModal();
+}
+
+function closeExportDialog() {
+  if (elements.exportDialog.open) {
+    elements.exportDialog.close();
+  }
+}
+
+function confirmExportAll() {
+  const data = new FormData(elements.exportForm);
+  exportAll(data.get("exportFormat") || "json", data.get("exportPackaging") || "single");
+  closeExportDialog();
 }
 
 function renderSupportedPlatforms() {
@@ -840,7 +907,20 @@ function repairGeminiMessagesForDisplay(messages) {
     });
   }
 
-  return repaired;
+  return mergeAdjacentGeminiUserMessages(repaired);
+}
+
+function mergeAdjacentGeminiUserMessages(messages) {
+  const merged = [];
+  for (const message of messages || []) {
+    const previous = merged[merged.length - 1];
+    if (previous && previous.role === "user" && message.role === "user") {
+      previous.text = cleanText(`${previous.text}\n${message.text}`);
+      continue;
+    }
+    merged.push({ ...message });
+  }
+  return merged.map((message, index) => ({ ...message, index }));
 }
 
 function stripGeminiSpeakerText(text, role) {
@@ -1054,7 +1134,24 @@ function repairKimiMessagesForDisplay(messages) {
     });
   }
 
-  return repaired;
+  return repairFirstKimiMultilinePrompt(repaired);
+}
+
+function repairFirstKimiMultilinePrompt(messages) {
+  if (messages.length < 3 ||
+      messages[0].role !== "assistant" ||
+      messages[1].role !== "user" ||
+      messages[2].role !== "assistant") {
+    return messages;
+  }
+
+  const firstUserMessage = {
+    ...messages[1],
+    id: `${messages[0].id || "kimi-first-prompt"}-${messages[1].id || "continued"}`,
+    text: cleanText(`${messages[0].text}\n${messages[1].text}`)
+  };
+  return [firstUserMessage, ...messages.slice(2)]
+    .map((message, index) => ({ ...message, index }));
 }
 
 function repairDoubaoMessagesForDisplay(messages) {
@@ -1258,9 +1355,13 @@ function splitKimiByActionMarkers(lines, markerIndexes) {
 
   for (const markerIndex of markerIndexes) {
     const segment = cleanText(lines.slice(start, markerIndex).join("\n"));
-    const split = splitKimiSegmentBeforeAction(segment);
-    addKimiPart(parts, "assistant", split.assistant);
-    addKimiPart(parts, "user", split.user);
+    if (start === 0 && parts.length === 0) {
+      addKimiPart(parts, "user", segment);
+    } else {
+      const split = splitKimiSegmentBeforeAction(segment);
+      addKimiPart(parts, "assistant", split.assistant);
+      addKimiPart(parts, "user", split.user);
+    }
     start = markerIndex + 1;
   }
 
@@ -1468,9 +1569,8 @@ function render() {
   elements.conversationCount.textContent = String(conversations.length);
   elements.messageCount.textContent = String(totalMessages);
   elements.statusText.textContent = buildStatusText(conversations);
-  elements.exportAllJsonButton.disabled = !conversations.length;
-  elements.exportAllMarkdownButton.disabled = !conversations.length;
-  elements.clearAllButton.disabled = !state.localConversations.length;
+  elements.exportButton.disabled = !conversations.length;
+  elements.clearWorkspaceButton.disabled = !conversations.length;
   elements.folderList.replaceChildren(...renderFolderButtons(conversations));
   elements.conversationList.replaceChildren(...renderConversationList(filtered));
 
@@ -1539,38 +1639,40 @@ function getSelectedConversation(filtered, all) {
 
 function renderFolderButtons(conversations) {
   const groups = groupByFolder(conversations);
-  const allButton = renderFolderButton({
-    id: "all",
-    label: tr("allBackups"),
-    count: conversations.length
-  });
-
-  return [allButton, ...groups.map(renderFolderButton)];
+  return groups.map(renderFolderButton);
 }
 
 function renderFolderButton(folder) {
   const li = document.createElement("li");
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "folder-button";
+  button.className = `folder-button platform-${folder.id}`;
   if (folder.id === state.selectedFolder) {
     button.classList.add("is-selected");
   }
 
-  const label = document.createElement("span");
-  label.textContent = localizePlatformName(folder.id, folder.label);
+  const label = localizePlatformName(folder.id, folder.label);
+  const platform = PREFS.platformByKey?.(folder.id) || PREFS.platformByKey?.(folder.label);
+  const icon = platform ? createPlatformIcon(platform) : createFolderFallbackIcon(label);
+  icon.classList.add("folder-platform-icon");
+  button.title = label;
+  button.setAttribute("aria-label", label);
 
-  const count = document.createElement("small");
-  count.textContent = String(folder.count);
-
-  button.append(label, count);
+  button.append(icon);
   button.addEventListener("click", () => {
-    state.selectedFolder = folder.id;
+    state.selectedFolder = state.selectedFolder === folder.id ? "all" : folder.id;
     state.selectedKey = "";
     render();
   });
   li.append(button);
   return li;
+}
+
+function createFolderFallbackIcon(label) {
+  const icon = document.createElement("span");
+  icon.className = "platform-icon";
+  icon.textContent = String(label || "AI").trim().slice(0, 2);
+  return icon;
 }
 
 function renderConversationList(conversations) {
@@ -1580,10 +1682,7 @@ function renderConversationList(conversations) {
   for (const group of groups) {
     const divider = document.createElement("li");
     divider.className = "folder-divider";
-    divider.append(
-      document.createTextNode(localizePlatformName(group.id, group.label)),
-      createSmallText(tr("groupConversationCount", { count: group.count }))
-    );
+    divider.textContent = localizePlatformName(group.id, group.label);
     nodes.push(divider);
     nodes.push(...group.items.map(renderConversationItem));
   }
@@ -1601,6 +1700,7 @@ function renderConversationItem(conversation) {
   }
 
   const textWrap = document.createElement("span");
+  textWrap.className = "conversation-copy";
   const title = document.createElement("span");
   title.className = "conversation-title";
   title.textContent = conversation.title;
@@ -1634,6 +1734,7 @@ function renderSelectedConversation(conversation) {
   elements.openSourceButton.disabled = !conversation?.sourceUrl;
   elements.exportMarkdownButton.disabled = !hasSelection;
   elements.exportJsonButton.disabled = !hasSelection;
+  elements.exportHtmlButton.disabled = !hasSelection;
   elements.deleteConversationButton.disabled = !hasSelection || conversation?.sourceType !== "browser";
   elements.deleteConversationButton.hidden = hasSelection && conversation?.sourceType !== "browser";
 
@@ -1655,6 +1756,7 @@ function renderSelectedConversation(conversation) {
   elements.folderBadge.textContent = localizePlatformName(conversation.folderId || conversation.platform, conversation.folderLabel);
   elements.conversationTitle.textContent = conversation.title;
   elements.conversationMeta.textContent = buildConversationMeta(conversation);
+  latexMacros = {};
   elements.messageList.replaceChildren(...conversation.messages.map(renderMessage));
   elements.userProgress.replaceChildren(...renderUserProgress(conversation.messages));
   window.setTimeout(updateUserProgressActive, 0);
@@ -1673,6 +1775,7 @@ function renderMessage(message) {
   if (message.role === "thinking") {
     const thinking = createThinkingBlock(message.text);
     thinking.classList.add("message-body", "thinking-message-body");
+    renderLatexInElement(thinking);
     article.append(role, thinking);
     return article;
   }
@@ -1680,6 +1783,7 @@ function renderMessage(message) {
   const body = document.createElement("div");
   body.className = "message-body";
   body.append(...renderMessageSegments(message.text));
+  renderLatexInElement(body);
 
   article.append(role, body);
   return article;
@@ -1712,6 +1816,13 @@ function renderMessageText(text) {
       const parsed = consumeCodeBlock(lines, index, fence[1] || "");
       nodes.push(createCodeBlock(parsed.code, parsed.language));
       index = parsed.nextIndex;
+      continue;
+    }
+
+    const displayMath = consumeDisplayMath(lines, index);
+    if (displayMath) {
+      nodes.push(createLatexBlock(displayMath.tex, displayMath.raw));
+      index = displayMath.nextIndex;
       continue;
     }
 
@@ -1828,10 +1939,6 @@ function renderUserProgress(messages) {
   const rail = document.createElement("div");
   rail.className = "user-progress-rail";
 
-  const label = document.createElement("div");
-  label.className = "user-progress-label";
-  label.textContent = tr("questions");
-
   const list = document.createElement("ol");
   list.className = "user-progress-list";
 
@@ -1850,7 +1957,7 @@ function renderUserProgress(messages) {
 
     const preview = document.createElement("span");
     preview.className = "user-progress-preview";
-    preview.textContent = trimToLength(cleanProgressTitle(message.text), 32);
+    preview.textContent = trimToLength(cleanProgressTitle(message.text), 240);
 
     button.append(number, preview);
     button.addEventListener("click", () => {
@@ -1862,7 +1969,7 @@ function renderUserProgress(messages) {
     list.append(item);
   });
 
-  rail.append(label, list);
+  rail.append(list);
   return [rail];
 }
 
@@ -2026,6 +2133,186 @@ function createCodeBlock(code, language) {
   return wrapper;
 }
 
+function consumeDisplayMath(lines, startIndex) {
+  const firstLine = String(lines[startIndex] || "");
+  const trimmed = firstLine.trim();
+  const delimiter = trimmed.startsWith("$$")
+    ? { left: "$$", right: "$$" }
+    : trimmed.startsWith("\\[")
+      ? { left: "\\[", right: "\\]" }
+      : null;
+
+  if (delimiter) {
+    const afterOpen = trimmed.slice(delimiter.left.length);
+    const sameLineEnd = afterOpen.indexOf(delimiter.right);
+    if (sameLineEnd >= 0) {
+      const trailing = afterOpen.slice(sameLineEnd + delimiter.right.length).trim();
+      if (!trailing) {
+        return {
+          tex: afterOpen.slice(0, sameLineEnd).trim(),
+          raw: trimmed,
+          nextIndex: startIndex + 1
+        };
+      }
+    }
+
+    const body = afterOpen ? [afterOpen] : [];
+    for (let index = startIndex + 1; index < lines.length; index += 1) {
+      const current = String(lines[index] || "");
+      const endIndex = current.indexOf(delimiter.right);
+      if (endIndex >= 0 && !current.slice(endIndex + delimiter.right.length).trim()) {
+        body.push(current.slice(0, endIndex));
+        return {
+          tex: body.join("\n").trim(),
+          raw: lines.slice(startIndex, index + 1).join("\n"),
+          nextIndex: index + 1
+        };
+      }
+      body.push(current);
+    }
+    return null;
+  }
+
+  const environment = trimmed.match(/^\\begin\{(equation\*?|align\*?|alignat\*?|gather\*?|multline\*?|CD)\}/);
+  if (!environment) {
+    return null;
+  }
+
+  const endPattern = new RegExp(`\\\\end\\{${escapeRegExp(environment[1])}\\}`);
+  for (let index = startIndex; index < lines.length; index += 1) {
+    if (endPattern.test(lines[index])) {
+      const raw = lines.slice(startIndex, index + 1).join("\n");
+      return { tex: raw.trim(), raw, nextIndex: index + 1 };
+    }
+  }
+  return null;
+}
+
+function createLatexBlock(tex, raw) {
+  const block = document.createElement("div");
+  block.className = "latex-block";
+  if (!renderKatex(tex, block, true)) {
+    block.classList.add("latex-fallback");
+    block.textContent = raw;
+  }
+  return block;
+}
+
+function renderLatexInElement(element) {
+  if (!element || typeof window.renderMathInElement !== "function") {
+    return;
+  }
+
+  try {
+    window.renderMathInElement(element, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "\\(", right: "\\)", display: false },
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\begin{equation}", right: "\\end{equation}", display: true },
+        { left: "\\begin{equation*}", right: "\\end{equation*}", display: true },
+        { left: "\\begin{align}", right: "\\end{align}", display: true },
+        { left: "\\begin{align*}", right: "\\end{align*}", display: true },
+        { left: "\\begin{gather}", right: "\\end{gather}", display: true },
+        { left: "\\begin{gather*}", right: "\\end{gather*}", display: true }
+      ],
+      ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "option"],
+      ignoredClasses: ["katex", "code-block", "inline-code", "latex-fallback"],
+      macros: latexMacros,
+      strict: "ignore",
+      trust: false,
+      throwOnError: false,
+      errorCallback: () => {}
+    });
+  } catch {
+    // Invalid or unsupported formulas remain as source text.
+  }
+
+  renderSingleDollarMath(element);
+}
+
+function renderSingleDollarMath(root) {
+  if (!root || !window.katex) {
+    return;
+  }
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      return node.parentElement?.closest(".katex, pre, code, .code-block, .inline-code, .latex-fallback")
+        ? NodeFilter.FILTER_REJECT
+        : NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const textNodes = [];
+  while (walker.nextNode()) {
+    textNodes.push(walker.currentNode);
+  }
+
+  const pattern = /(?<!\\)\$(?!\$)([^$\n]+?)(?<!\\)\$(?!\$)/g;
+  for (const textNode of textNodes) {
+    const source = textNode.nodeValue || "";
+    const matches = Array.from(source.matchAll(pattern));
+    if (!matches.some((match) => isLikelyInlineLatex(match[1]))) {
+      continue;
+    }
+
+    const fragment = document.createDocumentFragment();
+    let cursor = 0;
+    for (const match of matches) {
+      const start = match.index || 0;
+      fragment.append(document.createTextNode(source.slice(cursor, start)));
+      if (isLikelyInlineLatex(match[1])) {
+        const formula = document.createElement("span");
+        formula.className = "latex-inline";
+        if (renderKatex(match[1].trim(), formula, false)) {
+          fragment.append(formula);
+        } else {
+          fragment.append(document.createTextNode(match[0]));
+        }
+      } else {
+        fragment.append(document.createTextNode(match[0]));
+      }
+      cursor = start + match[0].length;
+    }
+    fragment.append(document.createTextNode(source.slice(cursor)));
+    textNode.replaceWith(fragment);
+  }
+}
+
+function isLikelyInlineLatex(value) {
+  const tex = String(value || "").trim();
+  if (!tex || /^\d+(?:[.,]\d+)?(?:\s*(?:usd|cny|rmb|eur|gbp))?$/i.test(tex)) {
+    return false;
+  }
+  if (/\\[a-zA-Z]+|[_^{}]|[=<>≈≠≤≥±×÷]|(?:^|\s)[+*/](?:\s|$)/.test(tex)) {
+    return true;
+  }
+  return /^[a-zA-Z]{1,3}\d?$/.test(tex);
+}
+
+function renderKatex(tex, target, displayMode) {
+  if (!window.katex || !String(tex || "").trim()) {
+    return false;
+  }
+  try {
+    window.katex.render(tex, target, {
+      displayMode,
+      macros: latexMacros,
+      output: "htmlAndMathml",
+      strict: "ignore",
+      trust: false,
+      throwOnError: true
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function createTableBlock(headers, rows) {
   const wrapper = document.createElement("div");
   wrapper.className = "table-scroll";
@@ -2133,6 +2420,7 @@ function normalizeCitationArtifacts(text) {
 function isSpecialMarkdownLine(lines, index) {
   const line = lines[index];
   return /^```/.test(line) ||
+    Boolean(consumeDisplayMath(lines, index)) ||
     /^(#{1,6})\s+/.test(line) ||
     isTableStart(lines, index) ||
     /^>\s?/.test(line) ||
@@ -2169,13 +2457,19 @@ function openSelectedSource() {
   }
 }
 
-function exportAll(format) {
+function exportAll(format, packaging = "single") {
   const conversations = getCombinedConversations();
   if (!conversations.length) {
     return;
   }
 
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  if (packaging === "zip") {
+    const archive = window.CBV_ZIP_EXPORT.createZip(buildZipEntries(conversations, format));
+    downloadBlob(`gpt-knowledge-base-${stamp}-${format}.zip`, archive);
+    return;
+  }
+
   if (format === "json") {
     downloadFile(
       `gpt-knowledge-base-${stamp}.json`,
@@ -2188,11 +2482,58 @@ function exportAll(format) {
     return;
   }
 
+  if (format === "html") {
+    downloadFile(
+      `gpt-knowledge-base-${stamp}.html`,
+      window.CBV_HTML_EXPORT.conversationsToHtml(conversations, {
+        language: state.preferences.language
+      }),
+      "text/html"
+    );
+    return;
+  }
+
   downloadFile(
     `gpt-knowledge-base-${stamp}.md`,
     conversations.map(conversationToMarkdown).join("\n\n---\n\n"),
     "text/markdown"
   );
+}
+
+function buildZipEntries(conversations, format) {
+  const extension = format === "markdown" ? "md" : format;
+  const usedNames = new Map();
+
+  return conversations.map((conversation, index) => {
+    const folder = safeFileName(localizePlatformName(
+      conversation.folderId || conversation.platform,
+      conversation.folderLabel || conversation.platformLabel || "Other"
+    )) || "Other";
+    const baseName = safeFileName(conversation.title) || `conversation-${index + 1}`;
+    const nameKey = `${folder}/${baseName}`.toLowerCase();
+    const duplicateIndex = (usedNames.get(nameKey) || 0) + 1;
+    usedNames.set(nameKey, duplicateIndex);
+    const uniqueName = duplicateIndex === 1 ? baseName : `${baseName}-${duplicateIndex}`;
+
+    return {
+      name: `${folder}/${uniqueName}.${extension}`,
+      content: conversationToExportContent(conversation, format)
+    };
+  });
+}
+
+function conversationToExportContent(conversation, format) {
+  if (format === "json") {
+    return JSON.stringify(conversation, null, 2);
+  }
+  if (format === "html") {
+    return window.CBV_HTML_EXPORT.conversationToHtml(conversation, {
+      language: state.preferences.language,
+      platformLabel: localizePlatformName(conversation.platform, conversation.platformLabel || "Unknown"),
+      folderLabel: localizePlatformName(conversation.folderId, conversation.folderLabel || "Unknown")
+    });
+  }
+  return conversationToMarkdown(conversation);
 }
 
 function exportSelected(format) {
@@ -2210,6 +2551,19 @@ function exportSelected(format) {
     return;
   }
 
+  if (format === "html") {
+    downloadFile(
+      `${safeFileName(conversation.title)}.html`,
+      window.CBV_HTML_EXPORT.conversationToHtml(conversation, {
+        language: state.preferences.language,
+        platformLabel: localizePlatformName(conversation.platform, conversation.platformLabel || "Unknown"),
+        folderLabel: localizePlatformName(conversation.folderId, conversation.folderLabel || "Unknown")
+      }),
+      "text/html"
+    );
+    return;
+  }
+
   downloadFile(
     `${safeFileName(conversation.title)}.md`,
     conversationToMarkdown(conversation),
@@ -2217,27 +2571,31 @@ function exportSelected(format) {
   );
 }
 
-async function clearLocalBackups() {
-  if (!state.localConversations.length) {
+async function clearWorkspace() {
+  if (!getCombinedConversations().length) {
     return;
   }
-  if (!confirm(tr("deleteAllConfirm"))) {
+  if (!confirm(tr("clearWorkspaceConfirm"))) {
     return;
   }
 
-  const storageIds = state.localConversations
-    .map((conversation) => conversation.originalId || conversation.id)
-    .filter(Boolean);
-  const keys = storageIds.map((id) => CONVERSATION_PREFIX + id);
-  keys.push(INDEX_KEY);
-  await chrome.storage.local.remove(keys);
-  await chrome.storage.local.set({ [INDEX_KEY]: [] });
+  if (state.localConversations.length) {
+    const storageIds = state.localConversations
+      .map((conversation) => conversation.originalId || conversation.id)
+      .filter(Boolean);
+    const keys = storageIds.map((id) => CONVERSATION_PREFIX + id);
+    keys.push(INDEX_KEY);
+    await chrome.storage.local.remove(keys);
+    await chrome.storage.local.set({ [INDEX_KEY]: [] });
+  }
+
   state.localConversations = [];
-
-  const selected = getCombinedConversations().find((item) => item.viewerId === state.selectedKey);
-  if (!selected) {
-    state.selectedKey = "";
-  }
+  state.externalConversations = [];
+  state.externalFolderName = "";
+  state.externalDirectoryHandle = null;
+  state.externalFileCount = 0;
+  state.selectedKey = "";
+  state.selectedFolder = "all";
   render();
 }
 
@@ -2487,6 +2845,10 @@ function titleCase(value) {
 
 function downloadFile(filename, content, mimeType) {
   const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
+  downloadBlob(filename, blob);
+}
+
+function downloadBlob(filename, blob) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

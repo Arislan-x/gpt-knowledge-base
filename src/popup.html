@@ -17,16 +17,11 @@
               <h1 id="appTitle">GPT Knowledge Base</h1>
             </div>
           </div>
-          <div class="topbar-side">
-            <p id="statusText">Loading backups</p>
-            <p id="summaryText" class="summary-text">0 conversations, 0 messages</p>
-          </div>
           <div class="topbar-tools">
-            <section class="supported-strip" aria-labelledby="supportedPlatformsTitle">
-              <h2 id="supportedPlatformsTitle" class="sr-only">Supported GPTs</h2>
-              <p id="trademarkNotice" class="sr-only">Names and logos are used only as nominative links; trademarks belong to their owners.</p>
-              <div id="supportedIconList" class="supported-icons" aria-label="Supported GPT official links"></div>
-            </section>
+            <div class="topbar-side">
+              <p id="statusText">Loading backups</p>
+              <p id="summaryText" class="summary-text">0 conversations, 0 messages</p>
+            </div>
             <div class="settings-toolbar" aria-label="Interface settings">
               <label class="icon-select" title="Language">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
@@ -48,7 +43,7 @@
         </header>
 
         <div class="controls">
-          <div class="capture-card">
+          <div id="captureCard" class="capture-card">
             <label class="capture-toggle">
               <span class="capture-copy">
                 <span id="backupSwitchLabel">Live backup</span>
@@ -57,50 +52,27 @@
               <input id="captureToggle" type="checkbox" role="switch" checked>
               <span class="switch-track" aria-hidden="true"></span>
             </label>
-            <p id="localPrivacyNote" class="privacy-note">Only the currently open conversation is backed up. Data stays local.</p>
+            <p id="localPrivacyNote" class="sr-only">Only the currently open conversation is backed up. Data stays local.</p>
           </div>
           <button id="openVaultButton" class="primary wide-button" type="button">Open Workstation</button>
           <div class="button-row">
             <button id="exportJsonButton" type="button">JSON</button>
-            <button id="exportMarkdownButton" type="button">Markdown</button>
-            <button id="clearButton" class="danger" type="button">Clear</button>
+            <button id="exportMarkdownButton" type="button">MD</button>
+            <button id="exportHtmlButton" type="button">HTML</button>
           </div>
           <section class="detail-section current-page-section" aria-label="Current page backup">
             <article id="detailPanel" class="detail-panel" hidden></article>
           </section>
-          <input id="searchInput" type="search" placeholder="Search conversations" autocomplete="off">
+          <section id="supportedStrip" class="supported-strip" aria-labelledby="supportedPlatformsTitle">
+            <h2 id="supportedPlatformsTitle" class="sr-only">Supported GPTs</h2>
+            <p id="trademarkNotice" class="sr-only">Names and logos are used only as nominative links; trademarks belong to their owners.</p>
+            <div id="supportedIconList" class="supported-icons" aria-label="Supported GPT official links"></div>
+          </section>
         </div>
-
-        <section class="stats" aria-label="Backup summary" hidden>
-          <div>
-            <span id="conversationCount">0</span>
-            <small id="conversationCountLabel">conversations</small>
-          </div>
-          <div>
-            <span id="messageCount">0</span>
-            <small id="messageCountLabel">messages</small>
-          </div>
-        </section>
       </section>
-
-      <section class="content list-section" aria-label="Backup list" hidden>
-        <header class="section-header">
-          <div>
-            <h2 id="backupListTitle">Chat backups</h2>
-            <small id="listSummary">0 groups</small>
-          </div>
-          <div class="section-actions">
-            <button id="expandGroupsButton" type="button">Expand</button>
-            <button id="collapseGroupsButton" type="button">Fold</button>
-            <button id="toggleListButton" type="button">Hide</button>
-          </div>
-        </header>
-        <ul id="conversationList" class="conversation-list"></ul>
-        <p id="emptyState" class="empty-state" hidden>Open a ChatGPT conversation to start local backups.</p>
-      </section>
-
     </main>
     <script src="preferences.js"></script>
+    <script src="export-html.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

@@ -1,0 +1,11 @@
+{
+  "extensionName": {
+    "message": "GPT Knowledge Base"
+  },
+  "extensionShortName": {
+    "message": "GPT KB"
+  },
+  "extensionDescription": {
+    "message": "Back up open AI conversations locally across platforms, then browse, organize, and export them for a traceable RAG workflow."
+  }
+}

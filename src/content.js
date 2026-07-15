@@ -2634,10 +2634,23 @@
       }))
       .filter((message) => isViableMessageText(message.text, 1));
 
-    return dedupeGeminiMessages(cleaned).map((message, index) => ({
+    return mergeAdjacentGeminiUserMessages(dedupeGeminiMessages(cleaned)).map((message, index) => ({
       ...message,
       index
     }));
+  }
+
+  function mergeAdjacentGeminiUserMessages(messages) {
+    const merged = [];
+    for (const message of messages || []) {
+      const previous = merged[merged.length - 1];
+      if (previous && previous.role === "user" && message.role === "user") {
+        previous.text = normalizeText(`${previous.text}\n${message.text}`);
+        continue;
+      }
+      merged.push({ ...message });
+    }
+    return merged;
   }
 
   function stripGeminiSpeakerText(text, role) {
@@ -3215,9 +3228,13 @@
 
     for (const markerIndex of markerIndexes) {
       const segment = normalizeText(lines.slice(start, markerIndex).join("\n"));
-      const split = splitKimiSegmentBeforeAction(segment);
-      addKimiPart(parts, "assistant", split.assistant);
-      addKimiPart(parts, "user", split.user);
+      if (start === 0 && parts.length === 0) {
+        addKimiPart(parts, "user", segment);
+      } else {
+        const split = splitKimiSegmentBeforeAction(segment);
+        addKimiPart(parts, "assistant", split.assistant);
+        addKimiPart(parts, "user", split.user);
+      }
       start = markerIndex + 1;
     }
 
