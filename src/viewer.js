@@ -49,6 +49,7 @@ const elements = {
   importZipLabel: document.querySelector("#importZipLabel"),
   importFolderButton: document.querySelector("#importFolderButton"),
   importFolderLabel: document.querySelector("#importFolderLabel"),
+  importPersistenceNotice: document.querySelector("#importPersistenceNotice"),
   closeImportDialogButton: document.querySelector("#closeImportDialogButton"),
   exportButton: document.querySelector("#exportButton"),
   clearWorkspaceButton: document.querySelector("#clearWorkspaceButton"),
@@ -70,6 +71,9 @@ const elements = {
   messageCount: document.querySelector("#messageCount"),
   messageCountLabel: document.querySelector("#messageCountLabel"),
   folderList: document.querySelector("#folderList"),
+  multiSelectButton: document.querySelector("#multiSelectButton"),
+  exportSelectedButton: document.querySelector("#exportSelectedButton"),
+  deleteSelectedButton: document.querySelector("#deleteSelectedButton"),
   conversationList: document.querySelector("#conversationList"),
   sourceBadge: document.querySelector("#sourceBadge"),
   folderBadge: document.querySelector("#folderBadge"),
@@ -93,6 +97,9 @@ const state = {
   externalConversations: [],
   selectedKey: "",
   selectedFolder: "all",
+  multiSelectMode: false,
+  multiSelectedKeys: new Set(),
+  exportViewerIds: null,
   query: "",
   externalFolderName: "",
   externalDirectoryHandle: null,
@@ -114,7 +121,7 @@ elements.importDialog.addEventListener("click", (event) => {
     closeImportDialog();
   }
 });
-elements.exportButton.addEventListener("click", openExportDialog);
+elements.exportButton.addEventListener("click", () => openExportDialog());
 elements.clearWorkspaceButton.addEventListener("click", clearWorkspace);
 elements.closeExportDialogButton.addEventListener("click", closeExportDialog);
 elements.cancelExportButton.addEventListener("click", closeExportDialog);
@@ -130,6 +137,9 @@ elements.searchInput.addEventListener("input", () => {
   state.query = elements.searchInput.value.trim().toLowerCase();
   render();
 });
+elements.multiSelectButton.addEventListener("click", toggleMultiSelectMode);
+elements.exportSelectedButton.addEventListener("click", openSelectedExportDialog);
+elements.deleteSelectedButton.addEventListener("click", deleteMultiSelectedConversations);
 elements.openSourceButton.addEventListener("click", openSelectedSource);
 elements.exportMarkdownButton.addEventListener("click", () => exportSelected("markdown"));
 elements.exportJsonButton.addEventListener("click", () => exportSelected("json"));
@@ -209,9 +219,11 @@ function applyStaticText() {
   setTooltip(elements.importButton, tr("importBackupsTooltip"));
   setTooltip(elements.exportButton, tr("exportBackupsTooltip"));
   setTooltip(elements.clearWorkspaceButton, tr("clearWorkspaceTooltip"));
+  updateMultiSelectControls();
   elements.importDialogTitle.textContent = tr("importDialogTitle");
   elements.importZipLabel.textContent = tr("importZip");
   elements.importFolderLabel.textContent = tr("importFolder");
+  elements.importPersistenceNotice.textContent = tr("importPersistenceNotice");
   setTooltip(elements.importZipButton, tr("importZipTooltip"));
   setTooltip(elements.importFolderButton, tr("importFolderTooltip"));
   elements.closeImportDialogButton.setAttribute("aria-label", tr("close"));
@@ -276,10 +288,15 @@ async function chooseExternalFolderFromDialog() {
   await chooseExternalFolder();
 }
 
-function openExportDialog() {
-  if (!getCombinedConversations().length) {
+function openExportDialog(conversations = null) {
+  const exportConversations = conversations || getCombinedConversations();
+  if (!exportConversations.length) {
     return;
   }
+  state.exportViewerIds = conversations ? exportConversations.map((conversation) => conversation.viewerId) : null;
+  elements.exportDialogTitle.textContent = conversations
+    ? tr("exportSelectedDialogTitle", { count: exportConversations.length })
+    : tr("exportDialogTitle");
   elements.exportDialog.showModal();
 }
 
@@ -287,12 +304,56 @@ function closeExportDialog() {
   if (elements.exportDialog.open) {
     elements.exportDialog.close();
   }
+  state.exportViewerIds = null;
+  elements.exportDialogTitle.textContent = tr("exportDialogTitle");
 }
 
 function confirmExportAll() {
   const data = new FormData(elements.exportForm);
-  exportAll(data.get("exportFormat") || "json", data.get("exportPackaging") || "single");
+  const conversations = state.exportViewerIds
+    ? getCombinedConversations().filter((conversation) => state.exportViewerIds.includes(conversation.viewerId))
+    : getCombinedConversations();
+  exportConversations(conversations, data.get("exportFormat") || "json", data.get("exportPackaging") || "single", {
+    selected: Boolean(state.exportViewerIds)
+  });
   closeExportDialog();
+}
+
+function toggleMultiSelectMode() {
+  state.multiSelectMode = !state.multiSelectMode;
+  if (!state.multiSelectMode) {
+    state.multiSelectedKeys.clear();
+  }
+  render();
+}
+
+function getMultiSelectedConversations() {
+  return getCombinedConversations().filter((conversation) => state.multiSelectedKeys.has(conversation.viewerId));
+}
+
+function openSelectedExportDialog() {
+  const conversations = getMultiSelectedConversations();
+  if (!conversations.length) {
+    alert(tr("noSelectedConversations"));
+    return;
+  }
+  openExportDialog(conversations);
+}
+
+function updateMultiSelectControls() {
+  if (!elements.multiSelectButton) {
+    return;
+  }
+  const count = state.multiSelectedKeys.size;
+  elements.multiSelectButton.classList.toggle("is-active", state.multiSelectMode);
+  elements.multiSelectButton.setAttribute("aria-pressed", String(state.multiSelectMode));
+  setTooltip(elements.multiSelectButton, tr(state.multiSelectMode ? "exitMultiSelect" : "multiSelect"));
+  elements.exportSelectedButton.hidden = !state.multiSelectMode;
+  elements.deleteSelectedButton.hidden = !state.multiSelectMode;
+  elements.exportSelectedButton.disabled = count === 0;
+  elements.deleteSelectedButton.disabled = count === 0;
+  setTooltip(elements.exportSelectedButton, tr("exportSelected", { count }));
+  setTooltip(elements.deleteSelectedButton, tr("deleteSelected", { count }));
 }
 
 function renderSupportedPlatforms() {
@@ -1652,6 +1713,12 @@ function isMessageControlLine(line) {
 
 function render() {
   const conversations = getCombinedConversations();
+  const availableKeys = new Set(conversations.map((conversation) => conversation.viewerId));
+  for (const key of state.multiSelectedKeys) {
+    if (!availableKeys.has(key)) {
+      state.multiSelectedKeys.delete(key);
+    }
+  }
   const filtered = filterConversations(conversations);
   const selected = getSelectedConversation(filtered, conversations);
   const totalMessages = conversations.reduce((sum, item) => sum + Number(item.messageCount || 0), 0);
@@ -1663,6 +1730,7 @@ function render() {
   elements.clearWorkspaceButton.disabled = !conversations.length;
   elements.folderList.replaceChildren(...renderFolderButtons(conversations));
   elements.conversationList.replaceChildren(...renderConversationList(filtered));
+  updateMultiSelectControls();
 
   renderSelectedConversation(selected);
 }
@@ -1788,6 +1856,18 @@ function renderConversationItem(conversation) {
   if (conversation.viewerId === state.selectedKey) {
     button.classList.add("is-selected");
   }
+  if (state.multiSelectMode) {
+    button.classList.add("is-multi-select");
+    button.setAttribute("aria-pressed", String(state.multiSelectedKeys.has(conversation.viewerId)));
+  }
+  if (state.multiSelectedKeys.has(conversation.viewerId)) {
+    button.classList.add("is-multi-selected");
+  }
+
+  const checkbox = document.createElement("span");
+  checkbox.className = "selection-checkbox";
+  checkbox.textContent = "✓";
+  checkbox.setAttribute("aria-hidden", "true");
 
   const textWrap = document.createElement("span");
   textWrap.className = "conversation-copy";
@@ -1807,8 +1887,20 @@ function renderConversationItem(conversation) {
   chip.textContent = conversation.sourceType === "folder" ? tr("folder") : tr("browserStorage");
 
   textWrap.append(title, meta);
+  if (state.multiSelectMode) {
+    button.append(checkbox);
+  }
   button.append(textWrap, chip);
   button.addEventListener("click", () => {
+    if (state.multiSelectMode) {
+      if (state.multiSelectedKeys.has(conversation.viewerId)) {
+        state.multiSelectedKeys.delete(conversation.viewerId);
+      } else {
+        state.multiSelectedKeys.add(conversation.viewerId);
+      }
+      render();
+      return;
+    }
     state.selectedKey = conversation.viewerId;
     render();
   });
@@ -2548,21 +2640,25 @@ function openSelectedSource() {
 }
 
 function exportAll(format, packaging = "single") {
-  const conversations = getCombinedConversations();
+  exportConversations(getCombinedConversations(), format, packaging);
+}
+
+function exportConversations(conversations, format, packaging = "single", options = {}) {
   if (!conversations.length) {
     return;
   }
 
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const prefix = options.selected ? "gpt-knowledge-base-selection" : "gpt-knowledge-base";
   if (packaging === "zip") {
     const archive = window.CBV_ZIP_EXPORT.createZip(buildZipEntries(conversations, format));
-    downloadBlob(`gpt-knowledge-base-${stamp}-${format}.zip`, archive);
+    downloadBlob(`${prefix}-${stamp}-${format}.zip`, archive);
     return;
   }
 
   if (format === "json") {
     downloadFile(
-      `gpt-knowledge-base-${stamp}.json`,
+      `${prefix}-${stamp}.json`,
       JSON.stringify({
         exportedAt: new Date().toISOString(),
         conversations
@@ -2574,7 +2670,7 @@ function exportAll(format, packaging = "single") {
 
   if (format === "html") {
     downloadFile(
-      `gpt-knowledge-base-${stamp}.html`,
+      `${prefix}-${stamp}.html`,
       window.CBV_HTML_EXPORT.conversationsToHtml(conversations, {
         language: state.preferences.language
       }),
@@ -2584,7 +2680,7 @@ function exportAll(format, packaging = "single") {
   }
 
   downloadFile(
-    `gpt-knowledge-base-${stamp}.md`,
+    `${prefix}-${stamp}.md`,
     conversations.map(conversationToMarkdown).join("\n\n---\n\n"),
     "text/markdown"
   );
@@ -2686,6 +2782,54 @@ async function clearWorkspace() {
   state.externalFileCount = 0;
   state.selectedKey = "";
   state.selectedFolder = "all";
+  state.multiSelectMode = false;
+  state.multiSelectedKeys.clear();
+  render();
+}
+
+async function deleteMultiSelectedConversations() {
+  const selected = getMultiSelectedConversations();
+  if (!selected.length) {
+    alert(tr("noSelectedConversations"));
+    return;
+  }
+
+  const browserConversations = selected.filter((conversation) => conversation.sourceType === "browser");
+  const externalCount = selected.length - browserConversations.length;
+  if (!browserConversations.length) {
+    alert(tr("noDeletableSelectedConversations"));
+    return;
+  }
+
+  const confirmKey = externalCount ? "deleteSelectedMixedConfirm" : "deleteSelectedConfirm";
+  if (!confirm(tr(confirmKey, { count: browserConversations.length, external: externalCount }))) {
+    return;
+  }
+
+  const storageIds = new Set(browserConversations
+    .map((conversation) => conversation.originalId || conversation.id)
+    .filter(Boolean));
+  if (!storageIds.size) {
+    return;
+  }
+
+  await chrome.storage.local.remove(Array.from(storageIds, (id) => CONVERSATION_PREFIX + id));
+  const stored = await chrome.storage.local.get(INDEX_KEY);
+  const index = Array.isArray(stored[INDEX_KEY]) ? stored[INDEX_KEY] : [];
+  await chrome.storage.local.set({
+    [INDEX_KEY]: index.filter((item) => !storageIds.has(item.id))
+  });
+
+  const deletedViewerIds = new Set(browserConversations.map((conversation) => conversation.viewerId));
+  state.localConversations = state.localConversations.filter((conversation) => {
+    const storageId = conversation.originalId || conversation.id;
+    return !storageIds.has(storageId);
+  });
+  if (deletedViewerIds.has(state.selectedKey)) {
+    state.selectedKey = "";
+  }
+  state.multiSelectedKeys.clear();
+  state.multiSelectMode = false;
   render();
 }
 

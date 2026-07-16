@@ -3,7 +3,7 @@
 ## Package
 
 - [x] Manifest V3
-- [x] Version set to `1.3.1`
+- [x] Version set to `1.3.2`
 - [x] Localized name, short name, and description (`zh_CN`, `en`)
 - [x] PNG manifest icons at 16, 32, 48, and 128 pixels
 - [x] Toolbar icon declared in `action.default_icon`
@@ -38,7 +38,7 @@
 
 - [ ] Run `powershell -ExecutionPolicy Bypass -File scripts/package-extension.ps1`
 - [ ] Load the generated ZIP's extracted contents as an unpacked extension and smoke-test it
-- [ ] Upload `dist/gpt-knowledge-base-1.3.1.zip`
+- [ ] Upload `dist/gpt-knowledge-base-1.3.2.zip`
 - [ ] Upload the store icon, screenshot, and small promotional tile
 - [ ] Paste the listing and privacy-practice copy into the dashboard
 - [ ] Submit for review

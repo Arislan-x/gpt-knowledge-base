@@ -27,15 +27,15 @@ In one sentence:
 - Monitors supported AI conversation pages.
 - Captures messages from the currently open conversation DOM.
 - Uses structured conversation JSON for ChatGPT when available, improving role and message-order accuracy.
-- Stores all data locally with `chrome.storage.local`.
+- Stores live-captured conversations persistently with `chrome.storage.local`; external ZIP and folder imports are read only for the current workstation session.
 - Automatically groups conversations by platform.
 - Provides a live-backup switch in the popup so capture can be paused for the current browsing session.
 - Supports Chinese and English interfaces, open-source font stacks, and Morandi-inspired themes.
-- Combines browser backups with a user-selected external backup folder while clearly marking each source.
+- Combines browser backups with a user-selected external ZIP or backup folder while clearly marking each source.
 - Renders role-based bubbles, Markdown, tables, code blocks, LaTeX formulas, copyable code, collapsed thinking, and user-question navigation in the workstation.
 - Exports individual conversations as Markdown, JSON, or HTML.
-- Exports all local conversations as merged Markdown, JSON, or HTML, or as a per-conversation ZIP archive.
-- Deletes individual or all browser-stored conversations.
+- Supports conversation multi-selection and exports selected or all conversations as merged Markdown, JSON, or HTML, or as a per-conversation ZIP archive.
+- Deletes individual, selected, or all browser-stored conversations without deleting source files in external folders.
 - Links supported platform names and available official logos to their respective websites for nominative reference only.
 
 ## Supported Platforms
@@ -91,6 +91,8 @@ The workstation can read a ZIP backup or an external backup folder after explici
 - Folder import reads `.json`, `.md`, or `.markdown` backup files from the selected folder.
 - Browser-stored and folder-based backups are displayed together.
 - Every conversation is marked as coming from browser storage or a folder.
+
+> **Persistence notice:** ZIP and external-folder imports are read only for the current workstation session. They are not copied into the extension's permanent browser storage. After refreshing or closing the workstation, or restarting the browser, the ZIP or folder must be selected again. Files on the computer are not modified; conversations captured by live backup continue to be stored persistently in browser storage.
 
 Chrome extensions cannot silently access arbitrary local paths. The user must explicitly select and authorize the ZIP or external folder. Files inside ZIP archives are read only as backup data; code inside them is not executed.
 
