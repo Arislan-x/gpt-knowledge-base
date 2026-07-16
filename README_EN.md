@@ -88,8 +88,8 @@ One-click installation will be available after the Chrome Web Store listing pass
 The `.sha256` file is not an installer. It only verifies that the ZIP was downloaded intact. **Most users can download the ZIP alone and install it without performing this optional check.** To verify on Windows, place the ZIP and `.sha256` file in the same folder and run PowerShell there:
 
 ```powershell
-$expected = (Get-Content .\gpt-knowledge-base-1.3.4.zip.sha256).Split()[0].ToLower()
-$actual = (Get-FileHash .\gpt-knowledge-base-1.3.4.zip -Algorithm SHA256).Hash.ToLower()
+$expected = (Get-Content .\gpt-knowledge-base-1.3.5.zip.sha256).Split()[0].ToLower()
+$actual = (Get-FileHash .\gpt-knowledge-base-1.3.5.zip -Algorithm SHA256).Hash.ToLower()
 $actual -eq $expected
 ```
 
@@ -99,13 +99,13 @@ $actual -eq $expected
 On Linux, run:
 
 ```bash
-sha256sum -c gpt-knowledge-base-1.3.4.zip.sha256
+sha256sum -c gpt-knowledge-base-1.3.5.zip.sha256
 ```
 
 On macOS, run:
 
 ```bash
-shasum -a 256 -c gpt-knowledge-base-1.3.4.zip.sha256
+shasum -a 256 -c gpt-knowledge-base-1.3.5.zip.sha256
 ```
 
 Public product website: [https://arislan-x.github.io/gpt-knowledge-base/](https://arislan-x.github.io/gpt-knowledge-base/).

@@ -8,10 +8,6 @@ Back up the AI conversation currently open by the user, store it locally, and pr
 
 ## Permission justifications
 
-### `activeTab`
-
-Used after the user opens the extension popup to identify the currently open supported conversation and to request a fresh capture when the user presses refresh. It is not used to inspect unrelated tabs in the background.
-
 ### `storage`
 
 Stores extension preferences, the local conversation index, and captured conversation content in `chrome.storage.local`.
@@ -22,7 +18,7 @@ Conversation archives can exceed the default extension storage quota, especially
 
 ### Content-script site access
 
-The extension runs content scripts only on the AI conversation sites listed in `manifest.json`. Access is required to read the DOM of the currently open conversation and extract message roles, text, formatting, and the source URL for the advertised live-backup feature.
+The extension runs content scripts only on the AI conversation sites listed in `manifest.json`. Access is required to read the DOM or same-origin current-conversation data of the open conversation and extract its title, message roles, order, text, citations, and source URL for the advertised live-backup feature. It does not scan unrelated sites, proactively read historical conversation lists, or transmit conversation data to developer servers.
 
 ## Remote code
 

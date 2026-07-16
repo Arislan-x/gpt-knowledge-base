@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.3.5 - 2026-07-16
+
+- Removed the redundant `activeTab` permission because the extension already has narrowly listed host access for supported AI sites.
+- Updated Chrome Web Store permission justifications, privacy disclosures, submission material, and release packaging.
+
 ## 1.3.4 - 2026-07-16
 
 - Added direct import of official ChatGPT export folders, including sharded conversation JSON files and active-branch reconstruction.

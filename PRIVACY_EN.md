@@ -29,10 +29,9 @@ Opening a platform link or source page only opens that official website in a new
 
 ## Permission use
 
-- `activeTab`: identifies the supported conversation currently open by the user and refreshes its capture on request;
 - `storage`: stores settings, the conversation index, and backup content locally;
 - `unlimitedStorage`: prevents long conversations and larger local knowledge bases from being constrained by the default extension storage quota;
-- Supported-site content script scopes: read the open conversation DOM only on the AI chat sites listed in the manifest to provide the advertised live-backup feature.
+- Supported-site content script scopes: read only the open conversation DOM or same-origin structured data on the AI chat sites listed in the manifest to provide the advertised live-backup feature; unrelated sites and historical conversation lists are not scanned.
 
 ## User control
 
