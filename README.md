@@ -90,8 +90,8 @@ Chrome Web Store 版本将在审核上架后提供一键安装链接。商店版
 `.sha256` 不是安装文件，只用于确认 ZIP 下载完整、未发生意外损坏。**普通用户可以只下载 ZIP 并直接解压安装；校验不是必需步骤。** 如果希望校验，请把 ZIP 和 `.sha256` 放在同一文件夹，在该文件夹打开 PowerShell：
 
 ```powershell
-$expected = (Get-Content .\gpt-knowledge-base-1.3.5.zip.sha256).Split()[0].ToLower()
-$actual = (Get-FileHash .\gpt-knowledge-base-1.3.5.zip -Algorithm SHA256).Hash.ToLower()
+$expected = (Get-Content .\gpt-knowledge-base-1.3.6.zip.sha256).Split()[0].ToLower()
+$actual = (Get-FileHash .\gpt-knowledge-base-1.3.6.zip -Algorithm SHA256).Hash.ToLower()
 $actual -eq $expected
 ```
 
@@ -101,13 +101,13 @@ $actual -eq $expected
 Linux 可以运行：
 
 ```bash
-sha256sum -c gpt-knowledge-base-1.3.5.zip.sha256
+sha256sum -c gpt-knowledge-base-1.3.6.zip.sha256
 ```
 
 macOS 可以运行：
 
 ```bash
-shasum -a 256 -c gpt-knowledge-base-1.3.5.zip.sha256
+shasum -a 256 -c gpt-knowledge-base-1.3.6.zip.sha256
 ```
 
 公开产品介绍页：[https://arislan-x.github.io/gpt-knowledge-base/](https://arislan-x.github.io/gpt-knowledge-base/)。
@@ -178,22 +178,3 @@ Chrome 不允许扩展静默读取任意本地路径，所以外部文件、ZIP 
 Copyright © 2026 Arislan-x.
 
 本项目原创代码和文档依据 **GNU General Public License v3.0（GPL-3.0）** 开源。你可以使用、研究、修改和再分发本项目；如果分发修改版或衍生版，必须继续依照 GPL-3.0 提供对应源码和许可声明。完整条款见 [`LICENSE`](LICENSE)。第三方组件仍适用其各自许可证；第三方平台名称、Logo 和商标归各自权利人所有，不因本项目采用 GPL-3.0 而改变权属。
-
-## 技术说明
-
-AI 对话网站的页面结构会经常变化，因此不同平台使用不同采集策略。
-
-- ChatGPT：优先使用结构化 conversation 数据；同一 user turn 中的中间 assistant/tool 步骤会合并为一个折叠思考块，只保留最后一个 assistant 作为可见回答。
-- Claude：增加 DOM range 兜底，会在相邻 user 气泡之间切出 assistant 回答。
-- Kimi：针对 `编辑 / 复制 / 分享` 等用户气泡控制文本做专门识别，并清理 Timeline、Panel、闪记、保存到文件夹、LaTeX 复制确认等尾部页面文本。
-- 千问：针对正文、引用、来源和视频卡片使用专用清洗与消息边界识别。
-- Perplexity：优先使用提问/回答结构标记恢复角色；新版页面缺少回答标记时，按“本轮提问到下一轮提问”的 DOM 范围提取回复，并对旧版合并记录使用标题与首段边界修复。复杂来源卡片的原始布局仍可能无法完全还原。
-- Poe：兼容新旧版 `ChatMessage` / `MessageBubble` 结构，并使用左右气泡信号区分角色。
-- DeepSeek：支持备份、获取和角色分段；优先重建当前活动分支，界面布局仍可能与原站不同。
-- 豆包：使用 `AI 生成可能有误 注意核实` 和 `已完成...` 类提示语作为兜底分割信号，尽量还原标题、user 和 assistant。
-- 腾讯元宝：按 human / AI 气泡容器采集，避免只保存最后一条识别结果。
-- 智谱清言：识别 `cid` 会话 ID、问题容器和正式回答区域，并排除思考区。
-- Hugging Face Chat：读取页面提供的明确 user / assistant 消息属性，不再依赖布局猜测。
-- 其他平台：先使用平台专用 selector，再使用通用 message selector，最后回退到主会话文本。
-
-如果 Chrome 在扩展重载后显示 `Extension context invalidated` 或 runtime messaging 错误，刷新已打开的聊天页面即可。旧 content script 不能继续连接新的 background worker。

@@ -1,6 +1,6 @@
 # Chrome Web Store 上架操作指南
 
-本指南对应 GPT 知识库 `v1.3.5`。首次上架必须在 Chrome Web Store Developer Dashboard 中手动完成。
+本指南对应 GPT 知识库 `v1.3.6`。首次上架必须在 Chrome Web Store Developer Dashboard 中手动完成。
 
 ## 1. 注册并检查开发者账号
 
@@ -14,9 +14,9 @@
 ## 2. 新建项目并上传 ZIP
 
 1. 在 Dashboard 点击 **Add new item / 添加新项目**。
-2. 只上传：`dist/gpt-knowledge-base-1.3.5.zip`。
+2. 只上传：`dist/gpt-knowledge-base-1.3.6.zip`。
 3. 不要上传 `.sha256`；它只供 GitHub 离线下载用户做可选完整性校验。
-4. 上传后确认 Dashboard 成功读取名称 `GPT 知识库`、版本 `1.3.5` 和 Manifest V3。
+4. 上传后确认 Dashboard 成功读取名称 `GPT 知识库`、版本 `1.3.6` 和 Manifest V3。
 
 ZIP 已满足：`manifest.json` 位于压缩包根目录，全部可执行代码随包提供，不使用远程代码。
 

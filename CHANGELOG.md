@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.3.6 - 2026-07-16
+
+- Removed implementation-specific platform capture notes from the public Chinese and English README files.
+
 ## 1.3.5 - 2026-07-16
 
 - Removed the redundant `activeTab` permission because the extension already has narrowly listed host access for supported AI sites.

@@ -88,8 +88,8 @@ One-click installation will be available after the Chrome Web Store listing pass
 The `.sha256` file is not an installer. It only verifies that the ZIP was downloaded intact. **Most users can download the ZIP alone and install it without performing this optional check.** To verify on Windows, place the ZIP and `.sha256` file in the same folder and run PowerShell there:
 
 ```powershell
-$expected = (Get-Content .\gpt-knowledge-base-1.3.5.zip.sha256).Split()[0].ToLower()
-$actual = (Get-FileHash .\gpt-knowledge-base-1.3.5.zip -Algorithm SHA256).Hash.ToLower()
+$expected = (Get-Content .\gpt-knowledge-base-1.3.6.zip.sha256).Split()[0].ToLower()
+$actual = (Get-FileHash .\gpt-knowledge-base-1.3.6.zip -Algorithm SHA256).Hash.ToLower()
 $actual -eq $expected
 ```
 
@@ -99,13 +99,13 @@ $actual -eq $expected
 On Linux, run:
 
 ```bash
-sha256sum -c gpt-knowledge-base-1.3.5.zip.sha256
+sha256sum -c gpt-knowledge-base-1.3.6.zip.sha256
 ```
 
 On macOS, run:
 
 ```bash
-shasum -a 256 -c gpt-knowledge-base-1.3.5.zip.sha256
+shasum -a 256 -c gpt-knowledge-base-1.3.6.zip.sha256
 ```
 
 Public product website: [https://arislan-x.github.io/gpt-knowledge-base/](https://arislan-x.github.io/gpt-knowledge-base/).
@@ -176,22 +176,3 @@ All product names, logos, icons, trademarks, and brand assets belong to their re
 Copyright © 2026 Arislan-x.
 
 The project's original code and documentation are open source under the **GNU General Public License v3.0 (GPL-3.0)**. You may use, study, modify, and redistribute the project. If you distribute a modified or derivative version, you must continue to provide the corresponding source and license notices under GPL-3.0. See [`LICENSE`](LICENSE) for the complete terms. Third-party components retain their own licenses; third-party platform names, logos, and trademarks remain the property of their respective owners and are not relicensed by GPL-3.0.
-
-## Technical Notes
-
-AI conversation websites change their page structures frequently, so each platform uses its own capture strategy.
-
-- ChatGPT: Prefers structured conversation data. Intermediate assistant and tool steps within one user turn are combined into a collapsed thinking block, while only the final assistant message is shown as the visible answer.
-- Claude: Uses a DOM-range fallback to extract assistant content between adjacent user bubbles.
-- Kimi: Detects user bubbles through controls such as `Edit / Copy / Share` and removes trailing Timeline, Panel, note, folder, and LaTeX-copy UI text.
-- Qwen: Uses dedicated cleanup and message-boundary handling for answer text, citations, sources, and video cards.
-- Perplexity: Prefers explicit query/answer markers. When a new page omits answer markers, it extracts the DOM range from one query to the next and repairs older merged records using the title and first-paragraph boundary. Complex source cards may still prevent exact visual reconstruction.
-- Poe: Supports current and legacy `ChatMessage` / `MessageBubble` layouts and uses left/right bubble signals to determine roles.
-- DeepSeek: Supports backup, capture, and role-based segmentation. It prioritizes reconstruction of the active branch; the visual layout may still differ from the source site.
-- Doubao: Uses `AI-generated content may be inaccurate` and `Completed...` status text as fallback boundaries to recover titles, user prompts, and assistant answers where possible.
-- Yuanbao: Captures human and AI bubble containers independently so earlier messages are not replaced by the last detected message.
-- Qingyan: Reads the `cid` conversation identifier, question containers, and final-answer regions while excluding thinking blocks.
-- Hugging Face Chat: Reads explicit user and assistant message attributes exposed by the page instead of inferring roles from layout.
-- Other platforms: Use platform-specific selectors first, generic message selectors second, and a main-transcript fallback last.
-
-If Chrome reports `Extension context invalidated` or runtime messaging errors after reloading the extension, refresh any already-open chat pages. An old content script cannot reconnect to the newly loaded background service worker.
