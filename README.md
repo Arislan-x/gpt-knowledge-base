@@ -31,11 +31,11 @@ GPT 知识库是一个原创 Chrome Manifest V3 扩展，用于跨平台汇聚 A
 - 监听支持的 AI 对话页面。
 - 从页面 DOM 中捕获当前可见会话消息。
 - ChatGPT 可用时优先使用结构化 conversation JSON，以获得更可靠的角色与顺序。
-- 使用 `chrome.storage.local` 将实时捕获的会话永久保存在浏览器本地；外部 ZIP 和文件夹仅供当前工作站页面临时读取。
+- 使用 `chrome.storage.local` 将实时捕获的会话永久保存在浏览器本地；外部文件、ZIP 和文件夹仅供当前工作站页面临时读取。
 - 按平台自动分组，形成本地会话库。
 - 弹窗提供实时备份开关，可暂停当前会话继续备份。
 - 弹窗和完整库页支持中文 / 英文界面、开源字体栈、莫兰迪主题色。
-- 支持浏览器内置备份与用户手动选择的外部 ZIP / 备份文件夹合并显示，并标记来源。
+- 支持浏览器内置备份与用户手动选择的外部文件、ZIP、备份文件夹合并显示，并标记来源。
 - 完整库页支持角色气泡、Markdown / 表格 / 代码块 / LaTeX 公式渲染、代码复制、思考折叠、用户问题跳转栏。
 - 支持单个会话导出 Markdown / JSON / HTML。
 - 支持会话多选，并将所选或全部会话合并导出 Markdown / JSON / HTML，或按会话导出 ZIP。
@@ -90,8 +90,8 @@ Chrome Web Store 版本将在审核上架后提供一键安装链接。商店版
 `.sha256` 不是安装文件，只用于确认 ZIP 下载完整、未发生意外损坏。**普通用户可以只下载 ZIP 并直接解压安装；校验不是必需步骤。** 如果希望校验，请把 ZIP 和 `.sha256` 放在同一文件夹，在该文件夹打开 PowerShell：
 
 ```powershell
-$expected = (Get-Content .\gpt-knowledge-base-1.3.3.zip.sha256).Split()[0].ToLower()
-$actual = (Get-FileHash .\gpt-knowledge-base-1.3.3.zip -Algorithm SHA256).Hash.ToLower()
+$expected = (Get-Content .\gpt-knowledge-base-1.3.4.zip.sha256).Split()[0].ToLower()
+$actual = (Get-FileHash .\gpt-knowledge-base-1.3.4.zip -Algorithm SHA256).Hash.ToLower()
 $actual -eq $expected
 ```
 
@@ -101,13 +101,13 @@ $actual -eq $expected
 Linux 可以运行：
 
 ```bash
-sha256sum -c gpt-knowledge-base-1.3.3.zip.sha256
+sha256sum -c gpt-knowledge-base-1.3.4.zip.sha256
 ```
 
 macOS 可以运行：
 
 ```bash
-shasum -a 256 -c gpt-knowledge-base-1.3.3.zip.sha256
+shasum -a 256 -c gpt-knowledge-base-1.3.4.zip.sha256
 ```
 
 公开产品介绍页：[https://arislan-x.github.io/gpt-knowledge-base/](https://arislan-x.github.io/gpt-knowledge-base/)。
@@ -124,18 +124,28 @@ shasum -a 256 -c gpt-knowledge-base-1.3.3.zip.sha256
 
 ## 导入外部备份
 
-工作站可以读取 ZIP 备份包，或读取电脑上的外部备份文件夹；两种方式都必须由用户主动选择。
+工作站提供 `文件`、`ZIP`、`文件夹` 三种导入入口，且都必须由用户主动选择：
+
+1. **单个或多个文件：** 可直接选择一个或多个 `.json`、`.md`、`.markdown` 文件。
+2. **本工具导出的备份：** 支持重新导入本工具生成的 ZIP，也支持导入解压后的备份文件夹。
+3. **ChatGPT 官方导出：** 支持包含会话 JSON 分片和 `.dat` 附件的完整导出文件夹。
 
 - 点击 `打开工作站`。
-- 点击 `导入`，在弹窗中选择 `ZIP` 或 `文件夹`。
+- 点击 `导入`，在弹窗中选择 `文件`、`ZIP` 或 `文件夹`。
+- `文件`支持一次选择一个或多个 JSON、MD、Markdown 备份文件。
 - ZIP 支持本工具导出的备份包，以及使用 Store / Deflate 压缩、内含 `.json`、`.md` 或 `.markdown` 的常见压缩包。
-- 文件夹模式读取其中的 `.json`、`.md` 或 `.markdown` 备份文件。
+- 文件夹模式支持本工具导出的解压目录、普通 `.json` / `.md` / `.markdown` 备份目录，以及 ChatGPT 官方导出的完整目录。
+- 对 ChatGPT 官方导出，工作站会合并读取 `conversations.json` 或 `conversations-000.json` 等分片，沿当前分支还原用户、助手和思考消息。
+- `conversation_asset_file_names.json` 会用于恢复 `.dat` 附件的原始文件名与类型；导出目录中仍存在的图片可以预览，PDF、文档等附件可以从消息卡片打开。
+- **大型 ChatGPT 官方导出应先解压，再使用“文件夹”导入并选择最外层导出目录；不建议直接导入数 GB 的 ZIP。** ZIP 导入设有防止浏览器内存耗尽的安全上限。
 - 浏览器内置备份和外部文件夹备份会合并显示。
 - 每个会话都会标记为 `浏览器储存` 或 `文件夹` 来源。
 
-> **持久化说明：** ZIP 和外部文件夹仅供当前工作站页面临时读取，不会复制进扩展的浏览器永久储存。刷新、关闭工作站或重启浏览器后，需要重新选择 ZIP 或文件夹。电脑中的原文件不会被修改；插件实时捕获的会话仍会正常永久保存在浏览器储存中。
+> **持久化说明：** 外部文件、ZIP 和文件夹仅供当前工作站页面临时读取，不会复制进扩展的浏览器永久储存。刷新、关闭工作站或重启浏览器后，需要重新选择对应文件、ZIP 或文件夹。电脑中的原文件不会被修改；插件实时捕获的会话仍会正常永久保存在浏览器储存中。
 
-Chrome 不允许扩展静默读取任意本地路径，所以 ZIP 和外部文件夹都必须由用户主动授权选择。ZIP 中的文件只按备份数据读取，不会执行其中的代码。
+> **附件说明：** `.dat` 解析只读取用户主动选择的 ChatGPT 官方导出目录。附件本身不会被复制进浏览器储存，也不会被嵌入 JSON、Markdown 或 HTML 知识库导出；离开工作站后仍应保留原始 ChatGPT 导出文件夹。
+
+Chrome 不允许扩展静默读取任意本地路径，所以外部文件、ZIP 和文件夹都必须由用户主动授权选择。导入内容只按备份数据读取，不会执行其中的代码。
 
 ## 隐私模型
 

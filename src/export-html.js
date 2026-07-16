@@ -15,6 +15,7 @@
           user: "用户",
           assistant: "助手",
           thinking: "思考",
+          attachment: "附件",
           tool: "工具",
           system: "系统",
           unknown: "消息",
@@ -29,6 +30,7 @@
           user: "User",
           assistant: "Assistant",
           thinking: "Thinking",
+          attachment: "Attachment",
           tool: "Tool",
           system: "System",
           unknown: "Message",
@@ -84,8 +86,8 @@ ${messageHtml}
     const items = Array.isArray(conversations) ? conversations : [];
     const totalMessages = items.reduce((sum, item) => sum + (Array.isArray(item?.messages) ? item.messages.length : 0), 0);
     const roleLabels = language === "zh"
-      ? { user: "用户", assistant: "助手", thinking: "思考", tool: "工具", system: "系统", unknown: "消息" }
-      : { user: "User", assistant: "Assistant", thinking: "Thinking", tool: "Tool", system: "System", unknown: "Message" };
+      ? { user: "用户", assistant: "助手", thinking: "思考", attachment: "附件", tool: "工具", system: "系统", unknown: "消息" }
+      : { user: "User", assistant: "Assistant", thinking: "Thinking", attachment: "Attachment", tool: "Tool", system: "System", unknown: "Message" };
     const index = items.map((conversation, itemIndex) => {
       const title = String(conversation?.title || `${copy.title} ${itemIndex + 1}`);
       return `<li><a href="#conversation-${itemIndex + 1}">${escapeHtml(title)}</a><span>${Array.isArray(conversation?.messages) ? conversation.messages.length : 0}</span></li>`;
@@ -139,20 +141,42 @@ ${messageHtml}
     const role = normalizeRole(message?.role);
     const roleLabel = roleLabels[role] || roleLabels.unknown;
     const body = renderMarkdown(message?.text || "");
+    const attachments = renderAttachments(message?.attachments, roleLabels.attachment || "Attachment");
     if (role === "thinking") {
       return `      <article class="message message-thinking" id="message-${index + 1}">
         <div class="role-label">${escapeHtml(roleLabel)}</div>
         <details class="thinking-block">
           <summary>${escapeHtml(roleLabel)}</summary>
-          <div class="message-body">${body}</div>
+          <div class="message-body">${body}${attachments}</div>
         </details>
       </article>`;
     }
 
     return `      <article class="message message-${role}" id="message-${index + 1}">
         <div class="role-label">${escapeHtml(roleLabel)}</div>
-        <div class="message-body">${body}</div>
+        <div class="message-body">${body}${attachments}</div>
       </article>`;
+  }
+
+  function renderAttachments(attachments, label) {
+    const items = Array.isArray(attachments) ? attachments.filter(Boolean) : [];
+    if (!items.length) {
+      return "";
+    }
+    return `<div class="export-attachments" aria-label="${escapeAttribute(label)}">${items.map((attachment) => {
+      const name = String(attachment?.name || label);
+      const type = String(attachment?.mimeType || "");
+      const size = Number(attachment?.size) > 0 ? formatBytes(Number(attachment.size)) : "";
+      const meta = [type, size].filter(Boolean).join(" · ");
+      return `<div class="export-attachment"><strong>${escapeHtml(name)}</strong>${meta ? `<small>${escapeHtml(meta)}</small>` : ""}</div>`;
+    }).join("")}</div>`;
+  }
+
+  function formatBytes(bytes) {
+    const units = ["B", "KB", "MB", "GB"];
+    const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    const size = bytes / (1024 ** exponent);
+    return `${size >= 10 || exponent === 0 ? size.toFixed(0) : size.toFixed(1)} ${units[exponent]}`;
   }
 
   function renderMarkdown(value) {
@@ -396,6 +420,10 @@ ${messageHtml}
     .message { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 18px; align-items: start; }
     .role-label { padding-top: 15px; color: var(--muted); font-size: 13px; font-weight: 700; }
     .message-body, .thinking-block { min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 20px 22px; box-shadow: 0 8px 24px rgba(32, 54, 64, .055); overflow-wrap: anywhere; }
+    .export-attachments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+    .export-attachment { display: grid; gap: 3px; min-width: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); padding: 10px 12px; }
+    .export-attachment strong, .export-attachment small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .export-attachment small { color: var(--muted); font-size: 12px; }
     .message-user { grid-template-columns: minmax(0, 1fr) 84px; }
     .message-user .role-label { grid-column: 2; grid-row: 1; }
     .message-user .message-body { grid-column: 1; grid-row: 1; justify-self: end; width: min(78%, 760px); background: var(--user); border-color: #bdd0d9; }
@@ -429,6 +457,7 @@ ${messageHtml}
       .message-user .message-body { width: min(94%, 760px); }
       .role-label { padding-top: 0; }
       .message-body, .thinking-block { padding: 16px; }
+      .export-attachments { grid-template-columns: 1fr; }
     }
     @media print { body { background: #fff; } .conversation { width: 100%; padding: 0; } .message-body, .thinking-block { box-shadow: none; break-inside: avoid; } }
   `;

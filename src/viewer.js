@@ -47,6 +47,8 @@ const elements = {
   importDialogTitle: document.querySelector("#importDialogTitle"),
   importZipButton: document.querySelector("#importZipButton"),
   importZipLabel: document.querySelector("#importZipLabel"),
+  importFilesButton: document.querySelector("#importFilesButton"),
+  importFilesLabel: document.querySelector("#importFilesLabel"),
   importFolderButton: document.querySelector("#importFolderButton"),
   importFolderLabel: document.querySelector("#importFolderLabel"),
   importPersistenceNotice: document.querySelector("#importPersistenceNotice"),
@@ -64,6 +66,7 @@ const elements = {
   cancelExportButton: document.querySelector("#cancelExportButton"),
   confirmExportButton: document.querySelector("#confirmExportButton"),
   zipFileInput: document.querySelector("#zipFileInput"),
+  backupFileInput: document.querySelector("#backupFileInput"),
   folderFallbackInput: document.querySelector("#folderFallbackInput"),
   searchInput: document.querySelector("#searchInput"),
   conversationCount: document.querySelector("#conversationCount"),
@@ -104,6 +107,7 @@ const state = {
   externalFolderName: "",
   externalDirectoryHandle: null,
   externalFileCount: 0,
+  externalAssetUrls: [],
   pendingConversationId: "",
   preferences: { ...PREFS.DEFAULT_PREFERENCES }
 };
@@ -114,6 +118,7 @@ elements.fontSelect.addEventListener("change", () => updatePreferences({ font: e
 elements.themeSelect.addEventListener("change", () => updatePreferences({ theme: elements.themeSelect.value }));
 elements.importButton.addEventListener("click", openImportDialog);
 elements.importZipButton.addEventListener("click", chooseZipFile);
+elements.importFilesButton.addEventListener("click", chooseBackupFiles);
 elements.importFolderButton.addEventListener("click", chooseExternalFolderFromDialog);
 elements.closeImportDialogButton.addEventListener("click", closeImportDialog);
 elements.importDialog.addEventListener("click", (event) => {
@@ -132,6 +137,7 @@ elements.exportDialog.addEventListener("click", (event) => {
   }
 });
 elements.zipFileInput.addEventListener("change", handleZipFile);
+elements.backupFileInput.addEventListener("change", handleBackupFiles);
 elements.folderFallbackInput.addEventListener("change", handleFallbackFiles);
 elements.searchInput.addEventListener("input", () => {
   state.query = elements.searchInput.value.trim().toLowerCase();
@@ -146,6 +152,7 @@ elements.exportJsonButton.addEventListener("click", () => exportSelected("json")
 elements.exportHtmlButton.addEventListener("click", () => exportSelected("html"));
 elements.deleteConversationButton.addEventListener("click", deleteSelectedConversation);
 elements.messageList.addEventListener("scroll", updateUserProgressActive);
+window.addEventListener("pagehide", releaseExternalAssetUrls);
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === "local" && (changes[INDEX_KEY] || hasConversationChange(changes))) {
@@ -222,9 +229,11 @@ function applyStaticText() {
   updateMultiSelectControls();
   elements.importDialogTitle.textContent = tr("importDialogTitle");
   elements.importZipLabel.textContent = tr("importZip");
+  elements.importFilesLabel.textContent = tr("importFiles");
   elements.importFolderLabel.textContent = tr("importFolder");
   elements.importPersistenceNotice.textContent = tr("importPersistenceNotice");
   setTooltip(elements.importZipButton, tr("importZipTooltip"));
+  setTooltip(elements.importFilesButton, tr("importFilesTooltip"));
   setTooltip(elements.importFolderButton, tr("importFolderTooltip"));
   elements.closeImportDialogButton.setAttribute("aria-label", tr("close"));
   elements.exportDialogTitle.textContent = tr("exportDialogTitle");
@@ -281,6 +290,11 @@ function closeImportDialog() {
 function chooseZipFile() {
   closeImportDialog();
   elements.zipFileInput.click();
+}
+
+function chooseBackupFiles() {
+  closeImportDialog();
+  elements.backupFileInput.click();
 }
 
 async function chooseExternalFolderFromDialog() {
@@ -446,7 +460,10 @@ async function scanDirectoryHandle(handle) {
   await walkDirectory(handle, "", files);
   state.externalFolderName = handle.name || tr("folder");
   state.externalFileCount = files.length;
-  state.externalConversations = await parseExternalFiles(files, state.externalFolderName);
+  setStatus(tr("readingExternalBackup"));
+  const result = await parseExternalFiles(files, state.externalFolderName);
+  replaceExternalAssetUrls(result.assetUrls);
+  state.externalConversations = result.conversations;
 }
 
 async function walkDirectory(directoryHandle, basePath, files) {
@@ -475,8 +492,40 @@ async function handleFallbackFiles(event) {
   state.externalFolderName = inferRootFolderName(files) || tr("folder");
   state.externalFileCount = files.length;
   state.externalDirectoryHandle = null;
-  state.externalConversations = await parseExternalFiles(files, state.externalFolderName);
+  setStatus(tr("readingExternalBackup"));
+  const result = await parseExternalFiles(files, state.externalFolderName);
+  replaceExternalAssetUrls(result.assetUrls);
+  state.externalConversations = result.conversations;
   event.target.value = "";
+  render();
+}
+
+async function handleBackupFiles(event) {
+  const files = Array.from(event.target.files || [])
+    .filter((file) => isTextBackupFile(file.name))
+    .map((file) => ({
+      file,
+      relativePath: file.name
+    }));
+  event.target.value = "";
+  if (!files.length) {
+    return;
+  }
+
+  const sourceLabel = tr("selectedFiles");
+  setStatus(tr("readingExternalBackup"));
+  const result = await parseExternalFiles(files, sourceLabel);
+  if (!result.conversations.length) {
+    revokeAssetUrls(result.assetUrls);
+    setStatus(tr("filesNoReadableBackups"));
+    return;
+  }
+
+  state.externalFolderName = sourceLabel;
+  state.externalFileCount = files.length;
+  state.externalDirectoryHandle = null;
+  replaceExternalAssetUrls(result.assetUrls);
+  state.externalConversations = result.conversations;
   render();
 }
 
@@ -502,15 +551,18 @@ async function handleZipFile(event) {
     }
 
     const folderName = archive.name.replace(/\.zip$/i, "") || tr("folder");
-    const conversations = await parseExternalFiles(files, folderName);
-    if (!conversations.length) {
+    setStatus(tr("readingExternalBackup"));
+    const result = await parseExternalFiles(files, folderName);
+    if (!result.conversations.length) {
+      revokeAssetUrls(result.assetUrls);
       setStatus(tr("zipNoReadableBackups"));
       return;
     }
     state.externalFolderName = folderName;
     state.externalFileCount = files.length;
     state.externalDirectoryHandle = null;
-    state.externalConversations = conversations;
+    replaceExternalAssetUrls(result.assetUrls);
+    state.externalConversations = result.conversations;
     render();
   } catch (error) {
     setStatus(tr("zipReadFailed", { message: error?.message || error }));
@@ -522,14 +574,40 @@ function fileNameFromPath(value) {
 }
 
 function contentTypeForBackup(value) {
-  return String(value || "").toLowerCase().endsWith(".json")
-    ? "application/json"
-    : "text/markdown";
+  const name = String(value || "").toLowerCase();
+  if (name.endsWith(".json")) {
+    return "application/json";
+  }
+  if (name.endsWith(".dat")) {
+    return "application/octet-stream";
+  }
+  return "text/markdown";
 }
 
 async function parseExternalFiles(files, folderName) {
   const parsed = [];
+  const assetUrls = [];
+  const consumedPaths = new Set();
+  if (window.CBV_CHATGPT_IMPORT) {
+    try {
+      const chatGptExport = await window.CBV_CHATGPT_IMPORT.parseExportFiles(files, { folderName });
+      assetUrls.push(...chatGptExport.assetUrls);
+      chatGptExport.consumedPaths.forEach((path) => consumedPaths.add(path));
+      for (const entry of chatGptExport.entries) {
+        const conversation = normalizeConversation(entry.conversation, entry.sourceMeta);
+        if (conversation) {
+          parsed.push(conversation);
+        }
+      }
+    } catch (error) {
+      console.warn("Unable to parse ChatGPT export", error);
+    }
+  }
+
   for (const entry of files) {
+    if (consumedPaths.has(entry.relativePath) || !isTextBackupFile(entry.file.name)) {
+      continue;
+    }
     try {
       const text = await entry.file.text();
       const sourceMeta = {
@@ -549,7 +627,10 @@ async function parseExternalFiles(files, folderName) {
     }
   }
 
-  return parsed.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+  return {
+    conversations: parsed.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))),
+    assetUrls
+  };
 }
 
 function parseJsonBackup(text, sourceMeta) {
@@ -684,7 +765,10 @@ function normalizeConversation(raw, sourceMeta) {
     platform,
     originalId,
     raw.title || "",
-    messages.map((message) => `${message.role}:${hashString(message.text)}`).join("|")
+    messages.map((message) => {
+      const attachmentNames = (message.attachments || []).map((attachment) => attachment.name).join(",");
+      return `${message.role}:${hashString(message.text)}:${hashString(attachmentNames)}`;
+    }).join("|")
   ].join("\n");
 
   const updatedAt = normalizeDate(raw.updatedAt || raw.capturedAt || raw.createdAt || "");
@@ -810,7 +894,10 @@ function normalizePerplexityDisplayComparable(value) {
 
 function normalizeMessage(raw, index) {
   const text = cleanText(raw?.text || raw?.content || "");
-  if (!text) {
+  const attachments = Array.isArray(raw?.attachments)
+    ? raw.attachments.map(normalizeAttachment).filter(Boolean)
+    : [];
+  if (!text && !attachments.length) {
     return null;
   }
 
@@ -819,8 +906,35 @@ function normalizeMessage(raw, index) {
     id: cleanText(raw?.id || `${role}-${index}-${hashString(text.slice(0, 400))}`),
     role,
     text,
+    attachments,
     index: Number.isFinite(raw?.index) ? raw.index : index
   };
+}
+
+function normalizeAttachment(raw) {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+  const name = cleanText(raw.name || raw.fileName || raw.id || tr("attachment"));
+  if (!name) {
+    return null;
+  }
+  const attachment = {
+    id: cleanText(raw.id || name),
+    name: trimToLength(name, 240),
+    mimeType: cleanText(raw.mimeType || raw.mime_type || "application/octet-stream"),
+    size: Number.isFinite(Number(raw.size)) ? Number(raw.size) : 0,
+    width: Number.isFinite(Number(raw.width)) ? Number(raw.width) : 0,
+    height: Number.isFinite(Number(raw.height)) ? Number(raw.height) : 0,
+    kind: cleanText(raw.kind || "file"),
+    available: raw.available !== false
+  };
+  Object.defineProperty(attachment, "localUrl", {
+    value: cleanText(raw.localUrl || ""),
+    enumerable: false,
+    configurable: true
+  });
+  return attachment;
 }
 
 function repairWenxinMessagesForDisplay(messages) {
@@ -1965,10 +2079,96 @@ function renderMessage(message) {
   const body = document.createElement("div");
   body.className = "message-body";
   body.append(...renderMessageSegments(message.text));
+  const attachments = renderMessageAttachments(message.attachments);
+  if (attachments) {
+    body.append(attachments);
+  }
   renderLatexInElement(body);
 
   article.append(role, body);
   return article;
+}
+
+function renderMessageAttachments(attachments) {
+  const items = Array.isArray(attachments) ? attachments.filter(Boolean) : [];
+  if (!items.length) {
+    return null;
+  }
+
+  const list = document.createElement("div");
+  list.className = "message-attachments";
+  list.setAttribute("aria-label", tr("attachments"));
+
+  for (const attachment of items) {
+    const node = attachment.localUrl ? document.createElement("a") : document.createElement("div");
+    node.className = `attachment-card attachment-${attachment.kind || "file"}`;
+    if (attachment.localUrl) {
+      node.href = attachment.localUrl;
+      node.target = "_blank";
+      node.rel = "noreferrer noopener";
+      node.title = tr("openImportedAttachment", { name: attachment.name });
+    } else {
+      node.classList.add("is-unavailable");
+      node.title = tr("attachmentUnavailable");
+    }
+
+    if (attachment.kind === "image" && attachment.localUrl) {
+      const preview = document.createElement("img");
+      preview.className = "attachment-preview";
+      preview.src = attachment.localUrl;
+      preview.alt = attachment.name;
+      preview.loading = "lazy";
+      node.append(preview);
+    } else {
+      const badge = document.createElement("span");
+      badge.className = "attachment-extension";
+      badge.textContent = attachmentExtension(attachment.name);
+      badge.setAttribute("aria-hidden", "true");
+      node.append(badge);
+    }
+
+    const copy = document.createElement("span");
+    copy.className = "attachment-copy";
+    const name = document.createElement("strong");
+    name.textContent = attachment.name;
+    const meta = document.createElement("small");
+    meta.textContent = formatAttachmentMeta(attachment);
+    copy.append(name, meta);
+    node.append(copy);
+    list.append(node);
+  }
+
+  return list;
+}
+
+function attachmentExtension(name) {
+  const extension = String(name || "").match(/\.([a-z0-9]{1,8})$/i)?.[1] || "FILE";
+  return extension.toUpperCase();
+}
+
+function formatAttachmentMeta(attachment) {
+  const parts = [];
+  if (attachment.mimeType && attachment.mimeType !== "application/octet-stream") {
+    parts.push(attachment.mimeType);
+  }
+  if (attachment.size > 0) {
+    parts.push(formatBytes(attachment.size));
+  }
+  if (!attachment.localUrl) {
+    parts.push(tr("attachmentUnavailable"));
+  }
+  return parts.join(" · ") || tr("attachment");
+}
+
+function formatBytes(value) {
+  const bytes = Number(value);
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return "";
+  }
+  const units = ["B", "KB", "MB", "GB"];
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const size = bytes / (1024 ** exponent);
+  return `${size >= 10 || exponent === 0 ? size.toFixed(0) : size.toFixed(1)} ${units[exponent]}`;
 }
 
 function renderMessageSegments(text) {
@@ -2777,6 +2977,7 @@ async function clearWorkspace() {
 
   state.localConversations = [];
   state.externalConversations = [];
+  releaseExternalAssetUrls();
   state.externalFolderName = "";
   state.externalDirectoryHandle = null;
   state.externalFileCount = 0;
@@ -2864,10 +3065,34 @@ async function deleteSelectedConversation() {
 
 function clearExternalFolder() {
   state.externalConversations = [];
+  releaseExternalAssetUrls();
   state.externalFolderName = "";
   state.externalDirectoryHandle = null;
   state.externalFileCount = 0;
   render();
+}
+
+function replaceExternalAssetUrls(urls) {
+  releaseExternalAssetUrls();
+  state.externalAssetUrls = Array.isArray(urls) ? urls : [];
+}
+
+function releaseExternalAssetUrls() {
+  revokeAssetUrls(state.externalAssetUrls);
+  state.externalAssetUrls = [];
+}
+
+function revokeAssetUrls(urls) {
+  if (typeof URL === "undefined" || typeof URL.revokeObjectURL !== "function") {
+    return;
+  }
+  for (const url of Array.isArray(urls) ? urls : []) {
+    try {
+      URL.revokeObjectURL(url);
+    } catch {
+      // Ignore URLs that were already released by the browser.
+    }
+  }
 }
 
 function conversationToMarkdown(conversation) {
@@ -2886,6 +3111,9 @@ function conversationToMarkdown(conversation) {
     lines.push(`## ${ROLE_LABELS[message.role] || "Message"}`);
     lines.push("");
     lines.push(message.text || "");
+    for (const attachment of message.attachments || []) {
+      lines.push(`- Attachment: ${attachment.name}${attachment.mimeType ? ` (${attachment.mimeType})` : ""}`);
+    }
     lines.push("");
   }
 
@@ -2946,6 +3174,10 @@ function looksLikeConversation(data) {
 }
 
 function isSupportedBackupFile(fileName) {
+  return /\.(json|md|markdown|dat)$/i.test(fileName || "");
+}
+
+function isTextBackupFile(fileName) {
   return /\.(json|md|markdown)$/i.test(fileName || "");
 }
 
@@ -3028,7 +3260,10 @@ function normalizeDate(value) {
     return new Date(0).toISOString();
   }
 
-  const date = new Date(value);
+  const numeric = Number(value);
+  const date = Number.isFinite(numeric) && numeric > 0
+    ? new Date(numeric < 1e12 ? numeric * 1000 : numeric)
+    : new Date(value);
   if (Number.isNaN(date.getTime())) {
     return new Date(0).toISOString();
   }

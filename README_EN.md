@@ -29,11 +29,11 @@ In one sentence:
 - Monitors supported AI conversation pages.
 - Captures messages from the currently open conversation DOM.
 - Uses structured conversation JSON for ChatGPT when available, improving role and message-order accuracy.
-- Stores live-captured conversations persistently with `chrome.storage.local`; external ZIP and folder imports are read only for the current workstation session.
+- Stores live-captured conversations persistently with `chrome.storage.local`; external file, ZIP, and folder imports are read only for the current workstation session.
 - Automatically groups conversations by platform.
 - Provides a live-backup switch in the popup so capture can be paused for the current browsing session.
 - Supports Chinese and English interfaces, open-source font stacks, and Morandi-inspired themes.
-- Combines browser backups with a user-selected external ZIP or backup folder while clearly marking each source.
+- Combines browser backups with user-selected external files, ZIP archives, or backup folders while clearly marking each source.
 - Renders role-based bubbles, Markdown, tables, code blocks, LaTeX formulas, copyable code, collapsed thinking, and user-question navigation in the workstation.
 - Exports individual conversations as Markdown, JSON, or HTML.
 - Supports conversation multi-selection and exports selected or all conversations as merged Markdown, JSON, or HTML, or as a per-conversation ZIP archive.
@@ -88,8 +88,8 @@ One-click installation will be available after the Chrome Web Store listing pass
 The `.sha256` file is not an installer. It only verifies that the ZIP was downloaded intact. **Most users can download the ZIP alone and install it without performing this optional check.** To verify on Windows, place the ZIP and `.sha256` file in the same folder and run PowerShell there:
 
 ```powershell
-$expected = (Get-Content .\gpt-knowledge-base-1.3.3.zip.sha256).Split()[0].ToLower()
-$actual = (Get-FileHash .\gpt-knowledge-base-1.3.3.zip -Algorithm SHA256).Hash.ToLower()
+$expected = (Get-Content .\gpt-knowledge-base-1.3.4.zip.sha256).Split()[0].ToLower()
+$actual = (Get-FileHash .\gpt-knowledge-base-1.3.4.zip -Algorithm SHA256).Hash.ToLower()
 $actual -eq $expected
 ```
 
@@ -99,13 +99,13 @@ $actual -eq $expected
 On Linux, run:
 
 ```bash
-sha256sum -c gpt-knowledge-base-1.3.3.zip.sha256
+sha256sum -c gpt-knowledge-base-1.3.4.zip.sha256
 ```
 
 On macOS, run:
 
 ```bash
-shasum -a 256 -c gpt-knowledge-base-1.3.3.zip.sha256
+shasum -a 256 -c gpt-knowledge-base-1.3.4.zip.sha256
 ```
 
 Public product website: [https://arislan-x.github.io/gpt-knowledge-base/](https://arislan-x.github.io/gpt-knowledge-base/).
@@ -122,18 +122,28 @@ Public product website: [https://arislan-x.github.io/gpt-knowledge-base/](https:
 
 ## Import External Backups
 
-The workstation can read a ZIP backup or an external backup folder after explicit user authorization.
+The workstation provides three explicitly user-selected import options: **Files**, **ZIP**, and **Folder**.
+
+1. **One or more files:** directly select one or more `.json`, `.md`, or `.markdown` files.
+2. **Backups exported by this extension:** re-import the generated ZIP or its extracted folder.
+3. **Official ChatGPT exports:** import the complete folder containing conversation JSON shards and `.dat` assets.
 
 - Open the workstation.
-- Click **Import**, then choose **ZIP** or **Folder** in the dialog.
+- Click **Import**, then choose **Files**, **ZIP**, or **Folder** in the dialog.
+- **Files** accepts one or more JSON, MD, or Markdown backup files in one selection.
 - ZIP import supports archives exported by this extension and common Store/Deflate ZIP files containing `.json`, `.md`, or `.markdown` backups.
-- Folder import reads `.json`, `.md`, or `.markdown` backup files from the selected folder.
+- Folder import supports an extracted export from this extension, ordinary `.json` / `.md` / `.markdown` backup directories, and complete official ChatGPT export directories.
+- For an official ChatGPT export, the workstation merges `conversations.json` or sharded files such as `conversations-000.json`, then follows the active branch to reconstruct user, assistant, and thinking messages.
+- `conversation_asset_file_names.json` restores the original names and types of `.dat` assets. Images that are still present can be previewed, while PDFs and other documents can be opened from attachment cards.
+- **Extract large official ChatGPT exports first, then use Folder import and select the top-level export directory. Direct import of a multi-gigabyte ZIP is not recommended.** ZIP import has defensive browser-memory limits.
 - Browser-stored and folder-based backups are displayed together.
 - Every conversation is marked as coming from browser storage or a folder.
 
-> **Persistence notice:** ZIP and external-folder imports are read only for the current workstation session. They are not copied into the extension's permanent browser storage. After refreshing or closing the workstation, or restarting the browser, the ZIP or folder must be selected again. Files on the computer are not modified; conversations captured by live backup continue to be stored persistently in browser storage.
+> **Persistence notice:** External file, ZIP, and folder imports are read only for the current workstation session. They are not copied into the extension's permanent browser storage. After refreshing or closing the workstation, or restarting the browser, the corresponding files, ZIP, or folder must be selected again. Files on the computer are not modified; conversations captured by live backup continue to be stored persistently in browser storage.
 
-Chrome extensions cannot silently access arbitrary local paths. The user must explicitly select and authorize the ZIP or external folder. Files inside ZIP archives are read only as backup data; code inside them is not executed.
+> **Asset notice:** `.dat` parsing only reads an official ChatGPT export directory explicitly selected by the user. Asset binaries are not copied into browser storage or embedded in JSON, Markdown, or HTML knowledge-base exports. Keep the original ChatGPT export folder after leaving the workstation.
+
+Chrome extensions cannot silently access arbitrary local paths. The user must explicitly select and authorize external files, ZIP archives, or folders. Imported content is read only as backup data; code inside it is not executed.
 
 ## Privacy Model
 

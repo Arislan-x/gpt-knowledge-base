@@ -39,7 +39,8 @@
           <button id="exportButton" type="button">Export</button>
           <button id="clearWorkspaceButton" class="danger" type="button">Clear</button>
           <input id="zipFileInput" type="file" accept=".zip,application/zip" hidden>
-          <input id="folderFallbackInput" type="file" accept=".json,.md,.markdown,application/json,text/markdown" webkitdirectory multiple hidden>
+          <input id="backupFileInput" type="file" accept=".json,.md,.markdown,application/json,text/markdown" multiple hidden>
+          <input id="folderFallbackInput" type="file" accept=".json,.md,.markdown,.dat,application/json,text/markdown,application/octet-stream" webkitdirectory multiple hidden>
         </section>
 
         <section class="search-box" aria-label="Search">
@@ -155,13 +156,17 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v13H4z"/><path d="M7 4h10l2 3H5z"/><path d="M10 11h4"/><path d="M10 15h4"/></svg>
             <span id="importZipLabel">ZIP</span>
           </button>
+          <button id="importFilesButton" class="import-option" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>
+            <span id="importFilesLabel">Files</span>
+          </button>
           <button id="importFolderButton" class="import-option" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 2h9v11H3z"/></svg>
             <span id="importFolderLabel">Folder</span>
           </button>
         </div>
         <p id="importPersistenceNotice" class="import-persistence-notice">
-          ZIP and folder imports are read only for the current workstation session. They are not copied into permanent browser storage, and must be selected again after the page is refreshed or closed.
+          Import individual JSON or Markdown files, or ZIP files and folders exported by this extension. Official ChatGPT export folders are also supported. Extract large official exports and use Folder import instead of selecting a multi-gigabyte ZIP. Imported data is temporary and is not copied into permanent browser storage.
         </p>
       </form>
     </dialog>
@@ -210,6 +215,7 @@
     <script src="export-html.js"></script>
     <script src="export-zip.js"></script>
     <script src="import-zip.js"></script>
+    <script src="import-chatgpt.js"></script>
     <script src="viewer.js"></script>
   </body>
 </html>

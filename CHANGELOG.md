@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+## 1.3.4 - 2026-07-16
+
+- Added direct import of official ChatGPT export folders, including sharded conversation JSON files and active-branch reconstruction.
+- Added `.dat` asset resolution through ChatGPT's filename map, with local image previews and attachment cards.
+- Added direct multi-file import for JSON, MD, and Markdown backups alongside ZIP and folder import.
+- Kept imported ChatGPT assets session-only and excluded their transient blob URLs from knowledge-base exports.
+
 ## 1.3.3 - 2026-07-16
 
 - Relicensed the project under the GNU General Public License v3.0 and prepared the repository for public distribution.
