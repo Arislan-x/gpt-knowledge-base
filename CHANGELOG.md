@@ -4,43 +4,11 @@
 
 ## 1.3.6 - 2026-07-16
 
-- Removed implementation-specific platform capture notes from the public Chinese and English README files.
-
-## 1.3.5 - 2026-07-16
-
-- Removed the redundant `activeTab` permission because the extension already has narrowly listed host access for supported AI sites.
-- Updated Chrome Web Store permission justifications, privacy disclosures, submission material, and release packaging.
-
-## 1.3.4 - 2026-07-16
-
-- Added direct import of official ChatGPT export folders, including sharded conversation JSON files and active-branch reconstruction.
-- Added `.dat` asset resolution through ChatGPT's filename map, with local image previews and attachment cards.
-- Added direct multi-file import for JSON, MD, and Markdown backups alongside ZIP and folder import.
-- Kept imported ChatGPT assets session-only and excluded their transient blob URLs from knowledge-base exports.
-
-## 1.3.3 - 2026-07-16
-
-- Relicensed the project under the GNU General Public License v3.0 and prepared the repository for public distribution.
-- Documented GitHub Release offline installation and Chrome Web Store installation as the two supported distribution channels.
-- Clarified that SHA-256 verification is optional and documented Windows, Linux, and macOS verification commands.
-- Added a public product-page entry point and GitHub Pages publishing metadata.
-- Documented that images, video, audio, attachments, and generated files are not backed up and must be saved separately.
-- Added visible hover, focus, and pressed feedback to the popup JSON, Markdown, and HTML export buttons.
-
-## 1.3.2 - 2026-07-16
-
-- Added an import chooser for ZIP backup packages or local folders, including Store and Deflate ZIP reading.
-- Added workstation conversation multi-selection with selected JSON, Markdown, HTML, merged-file, and ZIP export.
-- Added batch deletion for selected browser backups while protecting conversations read from external folders.
-- Clarified that ZIP and folder imports are session-only and are not copied into permanent browser storage.
-- Improved narrow workstation behavior, platform-icon selection-ring spacing, and user-question navigation geometry.
-
-## 1.3.1 - 2026-07-16
-
-- Expanded and hardened cross-platform conversation capture and role recovery.
-- Refined the popup and workstation layouts, themes, fonts, native tooltips, and supported-platform presentation.
-- Added Markdown, JSON, HTML, merged-file, and ZIP export workflows.
-- Added local folder import, source-aware browsing, Markdown/LaTeX/code rendering, thinking collapse, and user-question navigation.
-- Added localized Chrome metadata, branded toolbar icons, privacy disclosures, store-listing material, and a reproducible release package.
-- Enlarged the small toolbar artwork and added a product presentation page.
-- Added the initial license notice and GitHub Release installation package.
+- Added local-first, real-time backup for the currently open conversation across supported AI platforms.
+- Added a unified workstation with platform grouping, source labels, role-based reading, Markdown, code, tables, citations, thinking collapse, LaTeX, and user-question navigation.
+- Added individual and multi-conversation JSON, Markdown, HTML, merged-file, and ZIP export.
+- Added import for JSON and Markdown files, extension backup ZIP files and folders, and official ChatGPT export folders.
+- Added local backup controls, source-aware deletion, responsive layouts, bilingual UI, font choices, and Morandi-inspired themes.
+- Added public Chinese and English documentation, privacy policies, Chrome Web Store submission material, and reproducible release packaging.
+- Licensed the project under GNU GPL v3.0 and removed the redundant `activeTab` permission before store submission.
+- Clarified that images, video, audio, uploaded attachments, and generated files are not backed up and must be saved separately.
