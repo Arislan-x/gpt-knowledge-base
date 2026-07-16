@@ -1,6 +1,8 @@
 # GPT Knowledge Base
 
-[简体中文](README.md) | [English](README_EN.md) | [Privacy Policy](PRIVACY_EN.md)
+[简体中文](README.md) | [English](README_EN.md) | [Product Website](https://arislan-x.github.io/gpt-knowledge-base/) | [Privacy Policy](PRIVACY_EN.md) | [GPL-3.0 License](LICENSE)
+
+**Open-source license: GNU General Public License v3.0**
 
 > Unify AI conversations into a RAG knowledge base
 
@@ -38,6 +40,10 @@ In one sentence:
 - Deletes individual, selected, or all browser-stored conversations without deleting source files in external folders.
 - Links supported platform names and available official logos to their respective websites for nominative reference only.
 
+## Backup Scope and Limitations
+
+> **Important:** This extension backs up recognizable conversation text and content structure only. It does not download or preserve images, videos, audio, uploaded attachments, model-generated files, or their binary contents. A retained filename, link, or description does not mean that the corresponding resource file has been backed up. Use the original platform's download function to save these resources separately.
+
 ## Supported Platforms
 
 The extension creates a separate logical group for each supported platform:
@@ -59,9 +65,17 @@ The extension creates a separate logical group for each supported platform:
 
 These are logical groups inside extension storage, not operating-system folders.
 
-## Install from a Private Release
+## Installation Methods
 
-1. Download the latest `gpt-knowledge-base-*.zip` and `.sha256` files from the private repository's [Releases](https://github.com/Arislan-x/gpt-knowledge-base/releases) page.
+The extension supports two installation methods:
+
+### Method 1: Chrome Web Store
+
+One-click installation will be available after the Chrome Web Store listing passes review. The store build and the public GitHub source use the same GPL-3.0 license. Once available, the store link will be added to the [product website](https://arislan-x.github.io/gpt-knowledge-base/) and this README.
+
+### Method 2: Offline Installation from GitHub Releases
+
+1. Download the latest `gpt-knowledge-base-*.zip` and `.sha256` files from the public repository's [Releases](https://github.com/Arislan-x/gpt-knowledge-base/releases/latest) page.
 2. Verify the SHA-256 value, then fully extract the ZIP to a stable folder. Chrome cannot load the ZIP directly.
 3. Open `chrome://extensions` in Chrome.
 4. Enable **Developer mode**.
@@ -69,7 +83,7 @@ These are logical groups inside extension storage, not operating-system folders.
 6. Open or refresh a supported AI conversation page.
 7. Select the extension icon to review backup status and open the workstation.
 
-The private commercial product page is available at [`product/index.html`](product/index.html). It is not publicly deployed.
+Public product website: [https://arislan-x.github.io/gpt-knowledge-base/](https://arislan-x.github.io/gpt-knowledge-base/).
 
 ## Development Installation
 
@@ -124,9 +138,9 @@ All product names, logos, icons, trademarks, and brand assets belong to their re
 
 ## Copyright and License
 
-Copyright © 2026 Arislan-x. All rights reserved.
+Copyright © 2026 Arislan-x.
 
-This project is currently private proprietary software. Access to the private repository or an official Release grants only a limited right to install and use the software as authorized. Except where applicable law expressly permits otherwise or with prior written permission, reproduction, modification, redistribution, resale, and derivative works are prohibited. See [`LICENSE`](LICENSE) for the complete notice. Third-party components and trademarks remain subject to their respective terms.
+The project's original code and documentation are open source under the **GNU General Public License v3.0 (GPL-3.0)**. You may use, study, modify, and redistribute the project. If you distribute a modified or derivative version, you must continue to provide the corresponding source and license notices under GPL-3.0. See [`LICENSE`](LICENSE) for the complete terms. Third-party components retain their own licenses; third-party platform names, logos, and trademarks remain the property of their respective owners and are not relicensed by GPL-3.0.
 
 ## Technical Notes
 

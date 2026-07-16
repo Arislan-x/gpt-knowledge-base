@@ -41,4 +41,4 @@ The extension does not sell data, use it for advertising or credit assessment, t
 
 ## Privacy policy URL
 
-Before submission, host `PRIVACY.md` at a publicly accessible HTTPS URL. A private GitHub repository URL is not sufficient for Chrome Web Store reviewers or users.
+Public privacy-policy URL for Chrome Web Store review: <https://arislan-x.github.io/gpt-knowledge-base/product/privacy.html>

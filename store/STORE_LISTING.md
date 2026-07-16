@@ -23,6 +23,8 @@ GPT 知识库把分散在不同 AI 对话平台中的当前会话保存到浏览
 - 支持单个会话或整个知识库导出为 JSON、Markdown、HTML 或 ZIP；
 - 所有会话数据默认只保存在用户设备上，不上传到开发者服务器。
 
+备份范围仅包括可识别的对话文本和内容结构，不包括图片、视频、音频、附件或模型生成文件本体，请用户自行下载保存。项目源码依据 GPL-3.0 公开。
+
 适合希望沉淀 AI 对话、整理研究资料、保留来源链接，或为本地 RAG 工作流准备结构化语料的用户。
 
 本扩展不是任何受支持 AI 平台的官方产品，也未获得其赞助、背书或合作授权。平台名称和图标仅用于指示兼容网站和跳转到其官网。
@@ -53,6 +55,8 @@ Key capabilities:
 - Import local backups and combine browser storage with user-selected folders;
 - Export one conversation or the complete knowledge base as JSON, Markdown, HTML, or ZIP;
 - Keep conversation data on the user's device by default, with no upload to developer servers.
+
+Backup scope is limited to recognizable conversation text and structure. Images, video, audio, attachments, and model-generated files are not preserved and should be downloaded separately. The project source is publicly available under GPL-3.0.
 
 The extension is designed for people who want to preserve useful AI conversations, organize research material, retain source links, or prepare structured content for a local RAG workflow.
 

@@ -3,7 +3,8 @@
 ## Package
 
 - [x] Manifest V3
-- [x] Version set to `1.3.2`
+- [x] Version set to `1.3.3`
+- [x] Source and documentation licensed under GPL-3.0
 - [x] Localized name, short name, and description (`zh_CN`, `en`)
 - [x] PNG manifest icons at 16, 32, 48, and 128 pixels
 - [x] Toolbar icon declared in `action.default_icon`
@@ -29,16 +30,16 @@
 - [x] Local data-use disclosures drafted
 - [x] Remote-code answer documented
 - [x] Chinese and English privacy policies written
-- [ ] Publish the privacy policy at a public HTTPS URL and enter it in the dashboard
+- [x] Publish the privacy policy at a public HTTPS URL through GitHub Pages
 - [ ] Verify that the developer account has current contact details and 2-Step Verification enabled
 - [ ] Complete the dashboard Limited Use certifications
-- [ ] Decide initial visibility: **Private** is recommended for a first reviewer/tester build
+- [ ] Publish the Chrome Web Store listing publicly after review
 
 ## Final submission
 
 - [ ] Run `powershell -ExecutionPolicy Bypass -File scripts/package-extension.ps1`
 - [ ] Load the generated ZIP's extracted contents as an unpacked extension and smoke-test it
-- [ ] Upload `dist/gpt-knowledge-base-1.3.2.zip`
+- [ ] Upload `dist/gpt-knowledge-base-1.3.3.zip`
 - [ ] Upload the store icon, screenshot, and small promotional tile
 - [ ] Paste the listing and privacy-practice copy into the dashboard
 - [ ] Submit for review

@@ -31,8 +31,11 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $runtimeRoots = @(
   $manifestPath,
   (Join-Path $root "LICENSE"),
+  (Join-Path $root "CHANGELOG.md"),
   (Join-Path $root "PRIVACY.md"),
+  (Join-Path $root "PRIVACY_EN.md"),
   (Join-Path $root "README.md"),
+  (Join-Path $root "README_EN.md"),
   (Join-Path $root "_locales"),
   (Join-Path $root "assets"),
   (Join-Path $root "src")
