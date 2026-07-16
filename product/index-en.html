@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="GPT Knowledge Base is a local-first Chrome extension for cross-platform AI conversation backup and RAG-ready organization.">
+    <title>GPT Knowledge Base - Unify AI conversations for RAG</title>
+    <link rel="icon" href="../assets/icons/icon32.png" sizes="32x32">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body class="page-en">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Back to top">
+        <img src="../assets/gpt-knowledge-base-icon.svg" alt="" width="40" height="40">
+        <span>GPT Knowledge Base</span>
+      </a>
+      <nav aria-label="Page navigation">
+        <a href="#install">Install</a>
+        <a href="#capabilities">Features</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#compatibility">Platforms</a>
+      </nav>
+      <div class="header-tools">
+        <div class="language-switch" aria-label="Switch language">
+          <a href="./#top" lang="zh-CN">中文</a>
+          <a class="is-active" href="index-en.html#top" lang="en" aria-current="page">EN</a>
+        </div>
+        <a class="header-action" href="https://github.com/Arislan-x/gpt-knowledge-base/releases/latest">GitHub Download</a>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-scrim" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <p class="eyebrow">Chrome Extension · Local First · GPL-3.0 · v1.3.3</p>
+          <h1 id="hero-title">GPT Knowledge Base</h1>
+          <p class="hero-lead">Unify AI conversations into a RAG knowledge base</p>
+          <p class="hero-description">
+            Back up the AI conversation currently open in your browser, then browse, select, and export valuable conversations in one local workstation as reusable personal knowledge assets.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-action" href="https://github.com/Arislan-x/gpt-knowledge-base/releases/latest">Install Offline from GitHub</a>
+            <span class="secondary-action is-disabled" aria-disabled="true">Chrome Web Store · Pending Review</span>
+          </div>
+          <p class="release-note">Open source under GNU GPL v3.0. The Chrome Web Store link will be published after approval.</p>
+        </div>
+      </section>
+
+      <section class="proof-strip" aria-label="Product highlights">
+        <div><strong>14</strong><span>AI platforms</span></div>
+        <div><strong>Live</strong><span>open-conversation backup</span></div>
+        <div><strong>Local</strong><span>browser storage</span></div>
+        <div><strong>GPL-3.0</strong><span>public source and copyleft</span></div>
+      </section>
+
+      <section class="section install-section" id="install">
+        <div class="section-heading compact">
+          <p class="eyebrow">Installation</p>
+          <h2>Two installation methods</h2>
+          <p>The GitHub and Chrome Web Store builds provide the same extension features under the same GPL-3.0 license.</p>
+        </div>
+        <div class="install-grid">
+          <article>
+            <span class="install-status is-ready">Available now</span>
+            <h3>Offline from GitHub Releases</h3>
+            <p>Download the latest ZIP, optionally verify it with the SHA-256 file, extract it, and choose “Load unpacked” on Chrome's extensions page.</p>
+            <a class="primary-action" href="https://github.com/Arislan-x/gpt-knowledge-base/releases/latest">Download Latest Release</a>
+          </article>
+          <article>
+            <span class="install-status">Preparing for review</span>
+            <h3>Chrome Web Store</h3>
+            <p>After approval, the store build will support one-click installation and Chrome-managed updates. The official listing link will appear here.</p>
+            <span class="secondary-action is-disabled" aria-disabled="true">Store link coming soon</span>
+          </article>
+        </div>
+        <div class="checksum-note">
+          <strong>SHA-256 verification is optional</strong>
+          <p>Most users only need the ZIP. The `.sha256` file is not an installer. To verify download integrity, place both files in one folder and run:</p>
+          <code>Get-FileHash .\gpt-knowledge-base-1.3.3.zip -Algorithm SHA256</code>
+          <p>Compare the result with the value in the `.sha256` file. Continue only when they match; otherwise download the files again.</p>
+        </div>
+      </section>
+
+      <section class="section" id="capabilities">
+        <div class="section-heading">
+          <p class="eyebrow">Product capabilities</p>
+          <h2>From chat backup to knowledge assets</h2>
+          <p>Preserve roles, sequence, and recognizable content structure so valuable conversations can become reliable inputs for retrieval and RAG workflows.</p>
+        </div>
+        <div class="feature-grid">
+          <article>
+            <span class="feature-index">01</span>
+            <h3>Cross-platform live capture</h3>
+            <p>Automatically update the conversation currently open on a supported AI platform without proactively reading historical conversation lists.</p>
+          </article>
+          <article>
+            <span class="feature-index">02</span>
+            <h3>High-fidelity local reading</h3>
+            <p>Distinguish user, assistant, and thinking content while rendering Markdown, code, tables, citations, and LaTeX formulas.</p>
+          </article>
+          <article>
+            <span class="feature-index">03</span>
+            <h3>Unified knowledge workstation</h3>
+            <p>Group conversations by platform, combine browser backups with user-selected external sources, and keep the source clearly identified.</p>
+          </article>
+          <article>
+            <span class="feature-index">04</span>
+            <h3>RAG-ready export</h3>
+            <p>Export individual or selected conversations as JSON, Markdown, or HTML, including merged-file and per-conversation ZIP options.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section-muted" id="workflow">
+        <div class="section-heading compact">
+          <p class="eyebrow">Workflow</p>
+          <h2>Build your collection in three steps</h2>
+        </div>
+        <ol class="workflow-list">
+          <li><span>1</span><div><h3>Open a conversation</h3><p>The extension identifies the supported platform and continually saves the messages loaded in the open conversation.</p></div></li>
+          <li><span>2</span><div><h3>Open the workstation</h3><p>Browse backups from different platforms and inspect roles, ordering, formatting, and source metadata.</p></div></li>
+          <li><span>3</span><div><h3>Select and export</h3><p>Choose conversations worth preserving and export them as traceable source material for your knowledge workflow.</p></div></li>
+        </ol>
+      </section>
+
+      <section class="section privacy-section" id="privacy">
+        <div class="section-heading">
+          <p class="eyebrow">Privacy by design</p>
+          <h2>Your data stays in your browser</h2>
+        </div>
+        <div class="privacy-copy">
+          <p>The extension processes only conversation information already presented in the currently open page and does not proactively fetch account history.</p>
+          <p>Backups stay in local browser storage and are not uploaded to developer servers or cloud backup APIs.</p>
+          <p>You can pause live backup, export selected conversations, or clear local data at any time.</p>
+          <p>Only recognizable text and structure are backed up. Save images, video, audio, attachments, and generated files separately.</p>
+        </div>
+      </section>
+
+      <section class="section compatibility-section" id="compatibility">
+        <div class="section-heading compact">
+          <p class="eyebrow">Compatibility</p>
+          <h2>Supported AI services</h2>
+          <p>Select a logo to open the corresponding official service.</p>
+        </div>
+        <div class="brand-grid">
+          <a href="https://chatgpt.com/" title="Open ChatGPT"><img src="../assets/brand/chatgpt.png" alt="ChatGPT"><span>ChatGPT</span></a>
+          <a href="https://claude.ai/" title="Open Claude"><img src="../assets/brand/claude.png" alt="Claude"><span>Claude</span></a>
+          <a href="https://grok.com/" title="Open Grok"><img src="../assets/brand/grok.png" alt="Grok"><span>Grok</span></a>
+          <a href="https://chat.deepseek.com/" title="Open DeepSeek"><img src="../assets/brand/deepseek.ico" alt="DeepSeek"><span>DeepSeek</span></a>
+          <a href="https://www.kimi.com/" title="Open Kimi"><img src="../assets/brand/kimi.ico" alt="Kimi"><span>Kimi</span></a>
+          <a href="https://gemini.google.com/" title="Open Gemini"><img src="../assets/brand/gemini.svg" alt="Gemini"><span>Gemini</span></a>
+          <a href="https://www.perplexity.ai/" title="Open Perplexity"><img src="../assets/brand/perplexity.ico" alt="Perplexity"><span>Perplexity</span></a>
+          <a href="https://poe.com/" title="Open Poe"><img src="../assets/brand/poe.ico" alt="Poe"><span>Poe</span></a>
+          <a href="https://www.qianwen.com/chat/" title="Open Qwen"><img src="../assets/brand/qwen.png" alt="Qwen"><span>Qwen</span></a>
+          <a href="https://www.doubao.com/chat/" title="Open Doubao"><img src="../assets/brand/doubao.png" alt="Doubao"><span>Doubao</span></a>
+          <a href="https://yuanbao.tencent.com/" title="Open Yuanbao"><img src="../assets/brand/yuanbao.ico" alt="Yuanbao"><span>Yuanbao</span></a>
+          <a href="https://chat.baidu.com/" title="Open Yiyan"><img src="../assets/brand/wenxin.png" alt="Yiyan"><span>Yiyan</span></a>
+          <a href="https://chatglm.cn/" title="Open Qingyan"><img src="../assets/brand/zhipu.png" alt="Qingyan"><span>Qingyan</span></a>
+          <a href="https://huggingface.co/chat/" title="Open Hugging Face"><img src="../assets/brand/huggingface.svg" alt="Hugging Face"><span>Hugging Face</span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-brand">
+        <img src="../assets/gpt-knowledge-base-icon.svg" alt="" width="36" height="36">
+        <div><strong>GPT Knowledge Base</strong><span>Unify AI conversations into a RAG knowledge base</span></div>
+      </div>
+      <div class="legal">
+        <p>Copyright © 2026 Arislan-x.</p>
+        <p>Original code and documentation are open source under GNU General Public License v3.0. Distributed modifications must remain GPL-3.0 compliant.</p>
+        <p>Third-party names and logos identify compatible services only. Their trademarks remain with their owners. This project is not sponsored, endorsed, authorized by, or affiliated with those platforms.</p>
+        <p class="legal-links"><a href="https://github.com/Arislan-x/gpt-knowledge-base">Source code</a><a href="https://github.com/Arislan-x/gpt-knowledge-base/blob/main/LICENSE">GPL-3.0</a><a href="privacy.html#en">Privacy policy</a></p>
+      </div>
+    </footer>
+  </body>
+</html>
