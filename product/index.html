@@ -59,7 +59,7 @@
           <article>
             <span class="install-status is-ready">立即可用</span>
             <h3>GitHub Release 离线安装</h3>
-            <p>下载最新 ZIP 与 SHA-256 文件，校验后解压，并在 Chrome 扩展管理页使用“加载已解压的扩展程序”。</p>
+            <p>下载最新 ZIP；如有需要可同时下载 `.sha256` 做完整性校验。解压后在 Chrome 扩展管理页使用“加载已解压的扩展程序”。</p>
             <a class="primary-action" href="https://github.com/Arislan-x/gpt-knowledge-base/releases/latest">下载最新 Release</a>
           </article>
           <article>
@@ -68,6 +68,12 @@
             <p>商店审核通过后可直接一键安装，并由 Chrome 管理后续更新。正式商品链接将在此处公布。</p>
             <span class="secondary-action is-disabled" aria-disabled="true">商店链接待开放</span>
           </article>
+        </div>
+        <div class="checksum-note">
+          <strong>SHA-256 校验是可选步骤</strong>
+          <p>普通用户只下载 ZIP 即可安装；`.sha256` 不是安装文件。若希望验证下载完整性，请将两个文件放在同一文件夹并运行：</p>
+          <code>Get-FileHash .\gpt-knowledge-base-1.3.3.zip -Algorithm SHA256</code>
+          <p>将结果与 `.sha256` 文件中的值比较，一致即可继续安装；不一致时请重新下载。</p>
         </div>
       </section>
 

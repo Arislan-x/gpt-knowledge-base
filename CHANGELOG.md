@@ -4,6 +4,7 @@
 
 - Relicensed the project under the GNU General Public License v3.0 and prepared the repository for public distribution.
 - Documented GitHub Release offline installation and Chrome Web Store installation as the two supported distribution channels.
+- Clarified that SHA-256 verification is optional and documented Windows, Linux, and macOS verification commands.
 - Added a public product-page entry point and GitHub Pages publishing metadata.
 - Documented that images, video, audio, attachments, and generated files are not backed up and must be saved separately.
 - Added visible hover, focus, and pressed feedback to the popup JSON, Markdown, and HTML export buttons.

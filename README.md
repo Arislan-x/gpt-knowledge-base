@@ -78,12 +78,37 @@ Chrome Web Store 版本将在审核上架后提供一键安装链接。商店版
 ### 方式二：GitHub Release 离线安装
 
 1. 在公开仓库的 [Releases](https://github.com/Arislan-x/gpt-knowledge-base/releases/latest) 页面下载最新的 `gpt-knowledge-base-*.zip` 和 `.sha256` 文件。
-2. 校验 SHA-256 后，将 ZIP 完整解压到一个固定文件夹；Chrome 不能直接加载 ZIP。
+2. 可选择先做 SHA-256 完整性校验，然后将 ZIP 完整解压到固定文件夹；Chrome 不能直接加载 ZIP。
 3. 打开 Chrome，进入 `chrome://extensions`。
 4. 开启开发者模式。
 5. 点击“加载已解压的扩展程序”，选择刚才的解压目录。
 6. 打开或刷新一个受支持的 AI 对话页面。
 7. 点击扩展图标，查看实时备份状态并进入工作站。
+
+#### SHA-256 完整性校验（可选）
+
+`.sha256` 不是安装文件，只用于确认 ZIP 下载完整、未发生意外损坏。**普通用户可以只下载 ZIP 并直接解压安装；校验不是必需步骤。** 如果希望校验，请把 ZIP 和 `.sha256` 放在同一文件夹，在该文件夹打开 PowerShell：
+
+```powershell
+$expected = (Get-Content .\gpt-knowledge-base-1.3.3.zip.sha256).Split()[0].ToLower()
+$actual = (Get-FileHash .\gpt-knowledge-base-1.3.3.zip -Algorithm SHA256).Hash.ToLower()
+$actual -eq $expected
+```
+
+- 返回 `True`：校验通过，可以继续解压安装。
+- 返回 `False`：不要安装，删除两个文件后从 GitHub Release 重新下载。
+
+Linux 可以运行：
+
+```bash
+sha256sum -c gpt-knowledge-base-1.3.3.zip.sha256
+```
+
+macOS 可以运行：
+
+```bash
+shasum -a 256 -c gpt-knowledge-base-1.3.3.zip.sha256
+```
 
 公开产品介绍页：[https://arislan-x.github.io/gpt-knowledge-base/](https://arislan-x.github.io/gpt-knowledge-base/)。
 

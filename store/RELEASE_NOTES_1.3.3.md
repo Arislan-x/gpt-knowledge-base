@@ -13,12 +13,24 @@
 ## 离线安装
 
 1. 下载 `gpt-knowledge-base-1.3.3.zip` 及对应的 `.sha256` 文件。
-2. 校验 SHA-256，并将 ZIP 完整解压到固定文件夹。
+2. 可选择先校验 SHA-256，然后将 ZIP 完整解压到固定文件夹。
 3. 在 Chrome 打开 `chrome://extensions` 并启用开发者模式。
 4. 点击“加载已解压的扩展程序”，选择解压目录。
 5. 打开受支持的 AI 会话页面并刷新一次。
 
 Chrome Web Store 链接将在商店审核上架后公布。
+
+## 安装包校验（可选）
+
+普通用户只需下载 ZIP；`.sha256` 不是安装文件。需要校验时，将两个文件放在同一文件夹并在 PowerShell 运行：
+
+```powershell
+$expected = (Get-Content .\gpt-knowledge-base-1.3.3.zip.sha256).Split()[0].ToLower()
+$actual = (Get-FileHash .\gpt-knowledge-base-1.3.3.zip -Algorithm SHA256).Hash.ToLower()
+$actual -eq $expected
+```
+
+返回 `True` 才表示校验通过；返回 `False` 时请重新下载。
 
 ## 许可与隐私
 

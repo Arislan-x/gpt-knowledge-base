@@ -76,12 +76,37 @@ One-click installation will be available after the Chrome Web Store listing pass
 ### Method 2: Offline Installation from GitHub Releases
 
 1. Download the latest `gpt-knowledge-base-*.zip` and `.sha256` files from the public repository's [Releases](https://github.com/Arislan-x/gpt-knowledge-base/releases/latest) page.
-2. Verify the SHA-256 value, then fully extract the ZIP to a stable folder. Chrome cannot load the ZIP directly.
+2. Optionally verify the SHA-256 value, then fully extract the ZIP to a stable folder. Chrome cannot load the ZIP directly.
 3. Open `chrome://extensions` in Chrome.
 4. Enable **Developer mode**.
 5. Select **Load unpacked** and choose the extracted directory.
 6. Open or refresh a supported AI conversation page.
 7. Select the extension icon to review backup status and open the workstation.
+
+#### Optional SHA-256 Integrity Check
+
+The `.sha256` file is not an installer. It only verifies that the ZIP was downloaded intact. **Most users can download the ZIP alone and install it without performing this optional check.** To verify on Windows, place the ZIP and `.sha256` file in the same folder and run PowerShell there:
+
+```powershell
+$expected = (Get-Content .\gpt-knowledge-base-1.3.3.zip.sha256).Split()[0].ToLower()
+$actual = (Get-FileHash .\gpt-knowledge-base-1.3.3.zip -Algorithm SHA256).Hash.ToLower()
+$actual -eq $expected
+```
+
+- `True`: verification passed; continue with extraction and installation.
+- `False`: do not install; delete both files and download them again from GitHub Releases.
+
+On Linux, run:
+
+```bash
+sha256sum -c gpt-knowledge-base-1.3.3.zip.sha256
+```
+
+On macOS, run:
+
+```bash
+shasum -a 256 -c gpt-knowledge-base-1.3.3.zip.sha256
+```
 
 Public product website: [https://arislan-x.github.io/gpt-knowledge-base/](https://arislan-x.github.io/gpt-knowledge-base/).
 
