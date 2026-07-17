@@ -90,8 +90,8 @@ Chrome Web Store 版本将在审核上架后提供一键安装链接。商店版
 `.sha256` 不是安装文件，只用于确认 ZIP 下载完整、未发生意外损坏。**普通用户可以只下载 ZIP 并直接解压安装；校验不是必需步骤。** 如果希望校验，请把 ZIP 和 `.sha256` 放在同一文件夹，在该文件夹打开 PowerShell：
 
 ```powershell
-$expected = (Get-Content .\gpt-knowledge-base-1.3.6.zip.sha256).Split()[0].ToLower()
-$actual = (Get-FileHash .\gpt-knowledge-base-1.3.6.zip -Algorithm SHA256).Hash.ToLower()
+$expected = (Get-Content .\gpt-knowledge-base-1.3.7.zip.sha256).Split()[0].ToLower()
+$actual = (Get-FileHash .\gpt-knowledge-base-1.3.7.zip -Algorithm SHA256).Hash.ToLower()
 $actual -eq $expected
 ```
 
@@ -101,13 +101,13 @@ $actual -eq $expected
 Linux 可以运行：
 
 ```bash
-sha256sum -c gpt-knowledge-base-1.3.6.zip.sha256
+sha256sum -c gpt-knowledge-base-1.3.7.zip.sha256
 ```
 
 macOS 可以运行：
 
 ```bash
-shasum -a 256 -c gpt-knowledge-base-1.3.6.zip.sha256
+shasum -a 256 -c gpt-knowledge-base-1.3.7.zip.sha256
 ```
 
 公开产品介绍页：[https://arislan-x.github.io/gpt-knowledge-base/](https://arislan-x.github.io/gpt-knowledge-base/)。

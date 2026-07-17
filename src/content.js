@@ -382,6 +382,15 @@
     }
 
     runtime.onMessage.addListener((message, _sender, sendResponse) => {
+      if (message?.type === "cbv:get-page-context") {
+        sendResponse({
+          ok: true,
+          url: location.href,
+          title: document.title
+        });
+        return false;
+      }
+
       if (!message || message.type !== "cbv:force-capture") {
         return false;
       }

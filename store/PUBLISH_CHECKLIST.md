@@ -3,7 +3,7 @@
 ## Package
 
 - [x] Manifest V3
-- [x] Version set to `1.3.6`
+- [x] Version set to `1.3.7`
 - [x] Redundant `activeTab` permission removed
 - [x] Source and documentation licensed under GPL-3.0
 - [x] Localized name, short name, and description (`zh_CN`, `en`)
@@ -40,7 +40,7 @@
 
 - [x] Run `powershell -ExecutionPolicy Bypass -File scripts/package-extension.ps1`
 - [ ] Load the generated ZIP's extracted contents as an unpacked extension and smoke-test it
-- [ ] Upload `dist/gpt-knowledge-base-1.3.6.zip`
+- [ ] Upload `dist/gpt-knowledge-base-1.3.7.zip`
 - [ ] Upload the store icon, screenshot, and small promotional tile
 - [ ] Paste the listing and privacy-practice copy into the dashboard
 - [ ] Submit for review

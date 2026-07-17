@@ -24,6 +24,21 @@ const PLATFORM_FOLDERS = [
   { key: "huggingface", label: "Hugging Face", hosts: ["huggingface.co", "hf.co"] }
 ];
 
+const CONVERSATION_URL_PATTERNS = [
+  /\/chat\/conversation\/([^/?#]+)/,
+  /\/a\/chat\/s\/([^/?#]+)/,
+  /\/project\/[^/]+\/chat\/([^/?#]+)/,
+  /\/chat\/[^/?#]+\/([^/?#]+)/,
+  /\/i\/grok\/([^/?#]+)/,
+  /\/spaces\/[^/]+\/[^/]+\/([^/?#]+)/,
+  /\/main\/[^/?#]+\/([^/?#]+)/,
+  /\/conversation\/([^/?#]+)/,
+  /\/chat\/([^/?#]+)/,
+  /\/search\/([^/?#]+)/,
+  /\/app\/([^/?#]+)/,
+  /\/c\/([^/?#]+)/
+];
+
 const PREFS = window.CBV_PREFERENCES;
 
 const elements = {
@@ -224,13 +239,28 @@ async function refreshActiveTabContext() {
   try {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     const tab = tabs?.[0] || null;
-    state.activeTab = tab?.id ? {
+    if (!Number.isInteger(tab?.id)) {
+      state.activeTab = null;
+      return;
+    }
+
+    const pageContext = await getActivePageContext(tab.id);
+    state.activeTab = {
       id: tab.id,
-      url: tab.url || "",
-      title: tab.title || ""
-    } : null;
+      url: pageContext?.url || tab.url || "",
+      title: pageContext?.title || tab.title || ""
+    };
   } catch {
     state.activeTab = null;
+  }
+}
+
+async function getActivePageContext(tabId) {
+  try {
+    const response = await chrome.tabs.sendMessage(tabId, { type: "cbv:get-page-context" });
+    return response?.ok && response.url ? response : null;
+  } catch {
+    return null;
   }
 }
 
@@ -308,23 +338,29 @@ function getCurrentPageConversation() {
     return null;
   }
 
+  const activeContext = getUrlContext(activeUrl);
+
   const exact = state.conversations.find((conversation) => sameConversationUrl(conversation.sourceUrl, activeUrl));
   if (exact) {
     return exact;
   }
 
-  const active = parseUrl(activeUrl);
-  if (!active) {
+  if (!activeContext) {
     return null;
   }
 
+  const byConversationId = state.conversations.find((conversation) => sameConversationIdentity(conversation, activeContext));
+  if (byConversationId) {
+    return byConversationId;
+  }
+
   return state.conversations.find((conversation) => {
-    const source = parseUrl(conversation.sourceUrl || "");
-    if (!source) {
+    const sourceContext = getUrlContext(conversation.sourceUrl || "");
+    if (!sourceContext) {
       return false;
     }
-    return normalizeHost(source.hostname) === normalizeHost(active.hostname) &&
-      normalizePath(source.pathname) === normalizePath(active.pathname);
+    return sameConversationHost(sourceContext.url.hostname, activeContext.url.hostname) &&
+      normalizePath(sourceContext.url.pathname) === normalizePath(activeContext.url.pathname);
   }) || null;
 }
 
@@ -371,9 +407,130 @@ function sameConversationUrl(left, right) {
   if (!first || !second) {
     return false;
   }
-  return normalizeHost(first.hostname) === normalizeHost(second.hostname) &&
+  return sameConversationHost(first.hostname, second.hostname) &&
     normalizePath(first.pathname) === normalizePath(second.pathname) &&
     first.search === second.search;
+}
+
+function sameConversationIdentity(conversation, activeContext) {
+  if (!activeContext?.conversationId || !activeContext.platform) {
+    return false;
+  }
+
+  const conversationPlatform = getConversationPlatformKey(conversation);
+  if (!isGenericPlatformKey(conversationPlatform) && conversationPlatform !== activeContext.platform) {
+    return false;
+  }
+
+  const activeIds = getIdentifierVariants(activeContext.conversationId, activeContext.platform);
+  const conversationIds = getConversationIdentifierSet(conversation, conversationPlatform);
+  for (const id of activeIds) {
+    if (conversationIds.has(id)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isGenericPlatformKey(value) {
+  return !value || value === "web";
+}
+
+function getConversationIdentifierSet(conversation, platformKey = "") {
+  const ids = new Set();
+  addIdentifierVariants(ids, conversation?.id, platformKey);
+  addIdentifierVariants(ids, conversation?.localId, platformKey);
+
+  const sourceContext = getUrlContext(conversation?.sourceUrl || "");
+  addIdentifierVariants(ids, sourceContext?.conversationId, sourceContext?.platform || platformKey);
+  return ids;
+}
+
+function addIdentifierVariants(target, value, platformKey = "") {
+  for (const variant of getIdentifierVariants(value, platformKey)) {
+    target.add(variant);
+  }
+}
+
+function getIdentifierVariants(value, platformKey = "") {
+  const variants = new Set();
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return variants;
+  }
+
+  const decoded = safeDecodeURIComponent(raw);
+  for (const candidate of [raw, decoded]) {
+    if (!candidate) {
+      continue;
+    }
+    variants.add(candidate);
+    variants.add(stripPlatformPrefix(candidate, platformKey));
+    variants.add(sanitizeIdentifier(candidate));
+    variants.add(stripPlatformPrefix(sanitizeIdentifier(candidate), platformKey));
+  }
+
+  return variants;
+}
+
+function getUrlContext(value) {
+  const url = parseUrl(value);
+  if (!url) {
+    return null;
+  }
+
+  const platform = inferPlatform(url.hostname)?.key || "";
+  return {
+    url,
+    platform,
+    conversationId: extractConversationIdFromUrl(url)
+  };
+}
+
+function extractConversationIdFromUrl(url) {
+  for (const pattern of CONVERSATION_URL_PATTERNS) {
+    const match = url.pathname.match(pattern);
+    if (match?.[1]) {
+      return safeDecodeURIComponent(match[1]);
+    }
+  }
+
+  for (const key of ["conversationId", "conversation_id", "chatId", "chat_id", "cid", "id"]) {
+    const value = url.searchParams.get(key);
+    if (value) {
+      return safeDecodeURIComponent(value);
+    }
+  }
+  return "";
+}
+
+function getConversationPlatformKey(conversation) {
+  const declared = String(conversation?.platform || conversation?.folderId || "").toLowerCase();
+  if (declared && declared !== "web") {
+    return declared;
+  }
+
+  const sourceContext = getUrlContext(conversation?.sourceUrl || "");
+  if (sourceContext?.platform) {
+    return sourceContext.platform;
+  }
+
+  return inferPlatform(conversation?.sourceHost)?.key || declared || "";
+}
+
+function sameConversationHost(left, right) {
+  const first = normalizeHost(left);
+  const second = normalizeHost(right);
+  if (!first || !second) {
+    return false;
+  }
+  if (first === second) {
+    return true;
+  }
+
+  const firstPlatform = inferPlatform(first)?.key || "";
+  const secondPlatform = inferPlatform(second)?.key || "";
+  return Boolean(firstPlatform && firstPlatform === secondPlatform);
 }
 
 function parseUrl(value) {
@@ -390,6 +547,38 @@ function normalizeHost(value) {
 
 function normalizePath(value) {
   return String(value || "/").replace(/\/+$/, "") || "/";
+}
+
+function stripPlatformPrefix(value, platformKey = "") {
+  const text = String(value || "");
+  const knownKeys = Array.from(new Set([
+    platformKey,
+    ...PLATFORM_FOLDERS.map((platform) => platform.key)
+  ].filter(Boolean)));
+
+  for (const key of knownKeys) {
+    const prefix = `${key}:`;
+    if (text.startsWith(prefix)) {
+      return text.slice(prefix.length);
+    }
+  }
+  return text;
+}
+
+function sanitizeIdentifier(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9._:-]/g, "_")
+    .replace(/_{2,}/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function safeDecodeURIComponent(value) {
+  try {
+    return decodeURIComponent(String(value || ""));
+  } catch {
+    return String(value || "");
+  }
 }
 
 function delay(ms) {

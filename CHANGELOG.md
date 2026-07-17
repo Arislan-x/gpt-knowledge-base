@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.3.7 - 2026-07-17
+
+- Fixed the popup incorrectly reporting that the current page had no backup across supported AI platforms after the `activeTab` permission was removed.
+- Added a permission-free page-context request from the popup to the existing content script so the current conversation URL remains available.
+- Improved current-page matching using platform-aware conversation IDs, equivalent platform domains, and URL variants.
+
 ## 1.3.6 - 2026-07-16
 
 - Added local-first, real-time backup for the currently open conversation across supported AI platforms.
