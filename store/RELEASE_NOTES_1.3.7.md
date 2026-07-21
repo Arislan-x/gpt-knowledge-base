@@ -2,6 +2,8 @@
 
 `v1.3.7` 修复弹窗无法识别当前页面已有备份的问题，并保持精简后的权限范围不变。
 
+现已在 [Chrome Web Store](https://chromewebstore.google.com/detail/gpt-%E7%9F%A5%E8%AF%86%E5%BA%93/edjcpeckhehobbjalbkgblcghgiecmjd) 正式上架，支持一键安装和 Chrome 管理的自动更新。
+
 ## 修复内容
 
 - 修复所有受支持 AI 平台的弹窗可能错误显示“当前页面暂无备份”的问题。
@@ -22,4 +24,4 @@
 3. 在 Chrome 的扩展管理页重新加载扩展。
 4. 刷新已打开的 AI 会话页面，使新版内容脚本生效。
 
-Chrome Web Store 上传包为同一个 `gpt-knowledge-base-1.3.7.zip`。
+Chrome Web Store 上架版本与 GitHub Release 中的 `gpt-knowledge-base-1.3.7.zip` 使用相同代码。

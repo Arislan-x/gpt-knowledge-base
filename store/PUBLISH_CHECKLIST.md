@@ -33,14 +33,14 @@
 - [x] Chinese and English privacy policies written
 - [x] Publish the privacy policy at a public HTTPS URL through GitHub Pages
 - [ ] Verify that the developer account has current contact details and 2-Step Verification enabled
-- [ ] Complete the dashboard Limited Use certifications
-- [ ] Publish the Chrome Web Store listing publicly after review
+- [x] Complete the dashboard Limited Use certifications
+- [x] Publish the Chrome Web Store listing publicly after review
 
 ## Final submission
 
 - [x] Run `powershell -ExecutionPolicy Bypass -File scripts/package-extension.ps1`
 - [ ] Load the generated ZIP's extracted contents as an unpacked extension and smoke-test it
-- [ ] Upload `dist/gpt-knowledge-base-1.3.7.zip`
+- [x] Upload `dist/gpt-knowledge-base-1.3.7.zip`
 - [ ] Upload the store icon, screenshot, and small promotional tile
-- [ ] Paste the listing and privacy-practice copy into the dashboard
-- [ ] Submit for review
+- [x] Paste the listing and privacy-practice copy into the dashboard
+- [x] Submit for review

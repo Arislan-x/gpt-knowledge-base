@@ -73,7 +73,7 @@ GPT 知识库是一个原创 Chrome Manifest V3 扩展，用于跨平台汇聚 A
 
 ### 方式一：Chrome Web Store
 
-Chrome Web Store 版本将在审核上架后提供一键安装链接。商店版与 GitHub 公开源码使用相同的 GPL-3.0 许可；商店链接开放后会更新在[产品网站](https://arislan-x.github.io/gpt-knowledge-base/)和本 README 中。
+[从 Chrome Web Store 安装 GPT 知识库](https://chromewebstore.google.com/detail/gpt-%E7%9F%A5%E8%AF%86%E5%BA%93/edjcpeckhehobbjalbkgblcghgiecmjd)，即可获得一键安装和 Chrome 管理的自动更新。商店版与 GitHub 公开源码使用相同的 GPL-3.0 许可。
 
 ### 方式二：GitHub Release 离线安装
 

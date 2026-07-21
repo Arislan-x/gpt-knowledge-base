@@ -71,7 +71,7 @@ The extension supports two installation methods:
 
 ### Method 1: Chrome Web Store
 
-One-click installation will be available after the Chrome Web Store listing passes review. The store build and the public GitHub source use the same GPL-3.0 license. Once available, the store link will be added to the [product website](https://arislan-x.github.io/gpt-knowledge-base/) and this README.
+[Install GPT Knowledge Base from the Chrome Web Store](https://chromewebstore.google.com/detail/gpt-%E7%9F%A5%E8%AF%86%E5%BA%93/edjcpeckhehobbjalbkgblcghgiecmjd) for one-click installation and Chrome-managed updates. The store build and the public GitHub source use the same GPL-3.0 license.
 
 ### Method 2: Offline Installation from GitHub Releases
 

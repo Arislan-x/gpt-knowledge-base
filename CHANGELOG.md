@@ -7,6 +7,7 @@
 - Fixed the popup incorrectly reporting that the current page had no backup across supported AI platforms after the `activeTab` permission was removed.
 - Added a permission-free page-context request from the popup to the existing content script so the current conversation URL remains available.
 - Improved current-page matching using platform-aware conversation IDs, equivalent platform domains, and URL variants.
+- Published the extension on the Chrome Web Store on 2026-07-21.
 
 ## 1.3.6 - 2026-07-16
 
