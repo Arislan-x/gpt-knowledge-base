@@ -8,6 +8,7 @@
 - Added an archive progress indicator in the workstation sidebar and automatic archive sync from both the workstation and popup.
 - Added recovery from an existing archive folder after extension removal, browser cache loss, or workstation reload.
 - Changed imports so file, ZIP, and folder imports are archived locally by default when local archiving is enabled.
+- Changed clear and delete actions to remove matching conversations from both browser storage and the authorized local archive, while leaving regular external folders untouched.
 - Deduplicated repeated copies of the same conversation across browser storage, local archive, and imports, keeping the newest version.
 - Fixed the right-side user-question progress rail so long conversations scroll inside the available space without exposing a scrollbar.
 - Added an "All" platform filter at the left of the platform filter row.

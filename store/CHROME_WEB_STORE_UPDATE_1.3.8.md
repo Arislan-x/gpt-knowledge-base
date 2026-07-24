@@ -8,17 +8,20 @@
 
 补充修复：英文工作站中的本地归档来源标签现已完整显示为 `Folder: Archive locally`，不再混用中文。
 
+删除行为已与本地归档保持一致：清空、单条删除和批量删除会同步移除浏览器储存及已授权本地归档中的对应会话；普通外部文件夹中的原文件不会被删除。
+
 ## 审核备注
 
 - 本次更新没有新增 Manifest 权限。
 - 本地归档使用浏览器提供的文件夹选择器，必须由用户主动选择并授权位置。
 - 扩展不会静默读取任意本地路径，不会上传会话内容到开发者服务器。
 - 外部导入文件只按备份数据解析，不执行其中的代码。
+- 清空和删除只操作浏览器储存及扩展写入授权归档目录的会话 JSON，不删除普通外部文件夹中的原文件。
 
 ## 中文商店“新版变化”短文案
 
-新增“归档到本地”：浏览器备份和导入内容可写入用户授权的本地文件夹，并支持重新选择旧归档文件夹恢复。导入同一会话时保留最新版本。修复长会话右侧进度条越界与英文来源标签翻译不完整的问题，并新增“全部”平台筛选入口。
+新增“归档到本地”：浏览器备份和导入内容可写入用户授权的本地文件夹，并支持重新选择旧归档文件夹恢复。清空、单条删除和批量删除会同步更新浏览器储存与本地归档。导入同一会话时保留最新版本，并修复长会话右侧进度条越界与英文来源标签翻译问题。
 
 ## English Update Notes
 
-Added Archive locally: browser backups and imports can be written to a user-authorized local folder, and selecting an existing archive folder can restore archived conversations. Imports now keep the latest version when the same conversation appears more than once. Long conversation progress navigation now scrolls within its available space, the platform filter includes an All entry, and the local archive source badge is now fully localized in English.
+Added Archive locally: browser backups and imports can be written to a user-authorized local folder, and selecting an existing archive folder can restore archived conversations. Clear, single-delete, and multi-delete actions now update both browser storage and the authorized local archive. Imports keep the latest version when a conversation appears more than once, and long-conversation navigation and English archive labels are fixed.

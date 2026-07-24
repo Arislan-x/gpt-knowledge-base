@@ -44,7 +44,7 @@ In one sentence:
 - Renders role-based bubbles, Markdown, tables, code blocks, LaTeX formulas, copyable code, collapsed thinking, and user-question navigation in the workstation.
 - Exports individual conversations as Markdown, JSON, or HTML.
 - Supports conversation multi-selection and exports selected or all conversations as merged Markdown, JSON, or HTML, or as a per-conversation ZIP archive.
-- Deletes individual, selected, or all browser-stored conversations without deleting source files in external folders.
+- Deletes individual, selected, or all conversations from both browser storage and the user-authorized local archive without deleting source files in regular external folders.
 - Links supported platform names and available official logos to their respective websites for nominative reference only.
 
 ## Backup Scope and Limitations

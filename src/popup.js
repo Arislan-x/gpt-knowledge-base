@@ -312,7 +312,7 @@ async function loadLocalArchiveState() {
   state.localArchive.directoryHandle = null;
   state.localArchive.permission = "unconfigured";
 
-  if (!state.localArchive.enabled || !isLocalArchiveHandleStorageSupported()) {
+  if (!isLocalArchiveHandleStorageSupported()) {
     return;
   }
 
@@ -432,6 +432,47 @@ async function queryLocalArchivePermission(handle) {
     return "granted";
   }
   return handle.queryPermission({ mode: LOCAL_ARCHIVE_MODE });
+}
+
+async function requestLocalArchivePermission(handle) {
+  if (!handle?.requestPermission) {
+    return "granted";
+  }
+  return handle.requestPermission({ mode: LOCAL_ARCHIVE_MODE });
+}
+
+async function runPopupLocalArchiveMutation(callback) {
+  if (state.localArchive.syncing) {
+    throw new Error(tr("localArchiveBusy"));
+  }
+
+  if (!state.localArchive.directoryHandle && isLocalArchiveHandleStorageSupported()) {
+    state.localArchive.directoryHandle = await readLocalArchiveDirectoryHandle();
+    if (state.localArchive.directoryHandle && !state.localArchive.directoryName) {
+      state.localArchive.directoryName = state.localArchive.directoryHandle.name || "";
+    }
+  }
+
+  const directoryHandle = state.localArchive.directoryHandle;
+  if (directoryHandle) {
+    const permission = await requestLocalArchivePermission(directoryHandle);
+    state.localArchive.permission = permission;
+    if (permission !== "granted") {
+      throw new Error(tr("localArchiveDeletePermissionRequired"));
+    }
+  }
+
+  state.localArchive.syncing = true;
+  state.localArchive.syncPending = false;
+
+  try {
+    return await callback(directoryHandle);
+  } finally {
+    state.localArchive.syncing = false;
+    if (state.localArchive.syncPending) {
+      await syncLocalArchiveFromPopup();
+    }
+  }
 }
 
 async function openLocalArchiveDb() {
@@ -1707,10 +1748,21 @@ async function deleteConversation(id) {
     return;
   }
 
-  await chrome.storage.local.remove(CONVERSATION_PREFIX + id);
-  state.index = state.index.filter((entry) => entry.id !== id);
-  state.conversations = state.conversations.filter((entry) => entry.id !== id);
-  await chrome.storage.local.set({ [INDEX_KEY]: state.index });
+  try {
+    await runPopupLocalArchiveMutation(async (directoryHandle) => {
+      if (directoryHandle) {
+        await window.CBV_LOCAL_ARCHIVE_FILES.deleteConversations(directoryHandle, [id]);
+      }
+      state.index = state.index.filter((entry) => entry.id !== id);
+      state.conversations = state.conversations.filter((entry) => entry.id !== id);
+      await chrome.storage.local.set({ [INDEX_KEY]: state.index });
+      await chrome.storage.local.remove(CONVERSATION_PREFIX + id);
+    });
+  } catch (error) {
+    alert(tr("localArchiveDeleteFailed", { message: error?.message || error }));
+    return;
+  }
+
   render();
 }
 

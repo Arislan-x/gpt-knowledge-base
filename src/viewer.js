@@ -889,6 +889,78 @@ async function writeLocalArchiveIndex(conversations) {
   );
 }
 
+async function runLocalArchiveMutation(callback) {
+  if (state.localArchive.syncing) {
+    throw new Error(tr("localArchiveBusy"));
+  }
+
+  if (!state.localArchive.directoryHandle && isLocalArchiveSupported()) {
+    state.localArchive.directoryHandle = await readLocalArchiveDirectoryHandle();
+    if (state.localArchive.directoryHandle && !state.localArchive.directoryName) {
+      state.localArchive.directoryName = state.localArchive.directoryHandle.name || "";
+    }
+  }
+
+  const directoryHandle = state.localArchive.directoryHandle;
+  if (directoryHandle) {
+    const permission = await requestLocalArchivePermission(directoryHandle);
+    state.localArchive.permission = permission;
+    if (permission !== "granted") {
+      updateLocalArchiveUi();
+      throw new Error(tr("localArchiveDeletePermissionRequired"));
+    }
+  }
+
+  state.localArchive.syncing = true;
+  state.localArchive.syncPending = false;
+  state.localArchive.lastError = "";
+  updateLocalArchiveUi();
+
+  try {
+    return await callback(directoryHandle);
+  } catch (error) {
+    state.localArchive.lastError = tr("localArchiveDeleteFailed", {
+      message: error?.message || error
+    });
+    if (error?.name === "NotAllowedError" || error?.name === "SecurityError") {
+      state.localArchive.permission = "denied";
+    }
+    throw error;
+  } finally {
+    state.localArchive.syncing = false;
+    updateLocalArchiveUi();
+    if (state.localArchive.syncPending) {
+      await syncLocalArchive();
+    }
+  }
+}
+
+async function deleteLocalArchiveConversationIds(directoryHandle, storageIds) {
+  if (!directoryHandle || !storageIds.size) {
+    return;
+  }
+  await window.CBV_LOCAL_ARCHIVE_FILES.deleteConversations(directoryHandle, storageIds);
+}
+
+async function clearLocalArchiveConversations(directoryHandle) {
+  if (!directoryHandle) {
+    return;
+  }
+  await window.CBV_LOCAL_ARCHIVE_FILES.clearConversations(directoryHandle);
+}
+
+function removeConversationIdsFromState(storageIds) {
+  state.localConversations = state.localConversations.filter((conversation) => {
+    return !storageIds.has(getConversationStorageId(conversation));
+  });
+  state.localArchiveConversations = state.localArchiveConversations.filter((conversation) => {
+    return !storageIds.has(getConversationStorageId(conversation));
+  });
+  for (const storageId of storageIds) {
+    state.localArchive.archivedIds.delete(storageId);
+  }
+}
+
 function buildLocalArchiveIndexEntry(conversation, relativePath = "") {
   const storageId = getConversationStorageId(conversation);
   if (!storageId) {
@@ -2799,6 +2871,8 @@ function renderConversationItem(conversation) {
 
 function renderSelectedConversation(conversation) {
   const hasSelection = Boolean(conversation);
+  const canDelete = conversation?.sourceType === "browser" ||
+    isLocalArchiveConversation(conversation);
   elements.emptyState.hidden = hasSelection;
   elements.messageList.hidden = !hasSelection;
   elements.userProgress.hidden = !hasSelection;
@@ -2806,8 +2880,8 @@ function renderSelectedConversation(conversation) {
   elements.exportMarkdownButton.disabled = !hasSelection;
   elements.exportJsonButton.disabled = !hasSelection;
   elements.exportHtmlButton.disabled = !hasSelection;
-  elements.deleteConversationButton.disabled = !hasSelection || conversation?.sourceType !== "browser";
-  elements.deleteConversationButton.hidden = hasSelection && conversation?.sourceType !== "browser";
+  elements.deleteConversationButton.disabled = !hasSelection || !canDelete;
+  elements.deleteConversationButton.hidden = hasSelection && !canDelete;
 
   if (!conversation) {
     elements.sourceBadge.className = "source-badge";
@@ -3745,17 +3819,28 @@ async function clearWorkspace() {
     return;
   }
 
-  if (state.localConversations.length) {
-    const storageIds = state.localConversations
-      .map((conversation) => conversation.originalId || conversation.id)
-      .filter(Boolean);
-    const keys = storageIds.map((id) => CONVERSATION_PREFIX + id);
-    keys.push(INDEX_KEY);
-    await chrome.storage.local.remove(keys);
-    await chrome.storage.local.set({ [INDEX_KEY]: [] });
+  try {
+    await runLocalArchiveMutation(async (directoryHandle) => {
+      await clearLocalArchiveConversations(directoryHandle);
+
+      const storageIds = state.localConversations
+        .map(getConversationStorageId)
+        .filter(Boolean);
+      const keys = storageIds.map((id) => CONVERSATION_PREFIX + id);
+      await chrome.storage.local.set({ [INDEX_KEY]: [] });
+      if (keys.length) {
+        await chrome.storage.local.remove(keys);
+      }
+
+      state.localConversations = [];
+      state.localArchiveConversations = [];
+      state.localArchive.archivedIds.clear();
+    });
+  } catch (error) {
+    alert(tr("localArchiveDeleteFailed", { message: error?.message || error }));
+    return;
   }
 
-  state.localConversations = [];
   state.externalConversations = [];
   releaseExternalAssetUrls();
   state.externalFolderName = "";
@@ -3775,37 +3860,45 @@ async function deleteMultiSelectedConversations() {
     return;
   }
 
-  const browserConversations = selected.filter((conversation) => conversation.sourceType === "browser");
-  const externalCount = selected.length - browserConversations.length;
-  if (!browserConversations.length) {
+  const deletableConversations = selected.filter((conversation) => {
+    return conversation.sourceType === "browser" || isLocalArchiveConversation(conversation);
+  });
+  const externalCount = selected.length - deletableConversations.length;
+  if (!deletableConversations.length) {
     alert(tr("noDeletableSelectedConversations"));
     return;
   }
 
   const confirmKey = externalCount ? "deleteSelectedMixedConfirm" : "deleteSelectedConfirm";
-  if (!confirm(tr(confirmKey, { count: browserConversations.length, external: externalCount }))) {
+  if (!confirm(tr(confirmKey, { count: deletableConversations.length, external: externalCount }))) {
     return;
   }
 
-  const storageIds = new Set(browserConversations
-    .map((conversation) => conversation.originalId || conversation.id)
+  const storageIds = new Set(deletableConversations
+    .map(getConversationStorageId)
     .filter(Boolean));
   if (!storageIds.size) {
     return;
   }
 
-  await chrome.storage.local.remove(Array.from(storageIds, (id) => CONVERSATION_PREFIX + id));
-  const stored = await chrome.storage.local.get(INDEX_KEY);
-  const index = Array.isArray(stored[INDEX_KEY]) ? stored[INDEX_KEY] : [];
-  await chrome.storage.local.set({
-    [INDEX_KEY]: index.filter((item) => !storageIds.has(item.id))
-  });
+  try {
+    await runLocalArchiveMutation(async (directoryHandle) => {
+      await deleteLocalArchiveConversationIds(directoryHandle, storageIds);
+      removeConversationIdsFromState(storageIds);
 
-  const deletedViewerIds = new Set(browserConversations.map((conversation) => conversation.viewerId));
-  state.localConversations = state.localConversations.filter((conversation) => {
-    const storageId = conversation.originalId || conversation.id;
-    return !storageIds.has(storageId);
-  });
+      const stored = await chrome.storage.local.get(INDEX_KEY);
+      const index = Array.isArray(stored[INDEX_KEY]) ? stored[INDEX_KEY] : [];
+      await chrome.storage.local.set({
+        [INDEX_KEY]: index.filter((item) => !storageIds.has(item.id))
+      });
+      await chrome.storage.local.remove(Array.from(storageIds, (id) => CONVERSATION_PREFIX + id));
+    });
+  } catch (error) {
+    alert(tr("localArchiveDeleteFailed", { message: error?.message || error }));
+    return;
+  }
+
+  const deletedViewerIds = new Set(deletableConversations.map((conversation) => conversation.viewerId));
   if (deletedViewerIds.has(state.selectedKey)) {
     state.selectedKey = "";
   }
@@ -3816,7 +3909,11 @@ async function deleteMultiSelectedConversations() {
 
 async function deleteSelectedConversation() {
   const conversation = getCombinedConversations().find((item) => item.viewerId === state.selectedKey);
-  if (!conversation || conversation.sourceType !== "browser") {
+  if (
+    !conversation ||
+    conversation.sourceType !== "browser" &&
+    !isLocalArchiveConversation(conversation)
+  ) {
     return;
   }
 
@@ -3824,21 +3921,28 @@ async function deleteSelectedConversation() {
     return;
   }
 
-  const storageId = conversation.originalId || conversation.id;
+  const storageId = getConversationStorageId(conversation);
   if (!storageId) {
     return;
   }
 
-  await chrome.storage.local.remove(CONVERSATION_PREFIX + storageId);
-  const stored = await chrome.storage.local.get(INDEX_KEY);
-  const index = Array.isArray(stored[INDEX_KEY]) ? stored[INDEX_KEY] : [];
-  const nextIndex = index.filter((item) => item.id !== storageId);
-  await chrome.storage.local.set({ [INDEX_KEY]: nextIndex });
-  state.localConversations = state.localConversations.filter((item) => {
-    return item.id !== conversation.id &&
-      item.originalId !== conversation.originalId &&
-      item.viewerId !== conversation.viewerId;
-  });
+  const storageIds = new Set([storageId]);
+  try {
+    await runLocalArchiveMutation(async (directoryHandle) => {
+      await deleteLocalArchiveConversationIds(directoryHandle, storageIds);
+      removeConversationIdsFromState(storageIds);
+
+      const stored = await chrome.storage.local.get(INDEX_KEY);
+      const index = Array.isArray(stored[INDEX_KEY]) ? stored[INDEX_KEY] : [];
+      const nextIndex = index.filter((item) => item.id !== storageId);
+      await chrome.storage.local.set({ [INDEX_KEY]: nextIndex });
+      await chrome.storage.local.remove(CONVERSATION_PREFIX + storageId);
+    });
+  } catch (error) {
+    alert(tr("localArchiveDeleteFailed", { message: error?.message || error }));
+    return;
+  }
+
   state.selectedKey = "";
   render();
 }

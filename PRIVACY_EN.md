@@ -36,7 +36,7 @@ Opening a platform link or source page only opens that official website in a new
 
 ## User control
 
-Users can pause live backup, disable local archiving in the workstation, delete one conversation, clear the local knowledge base, or uninstall the extension at any time. Chrome removes extension-local storage when the extension is uninstalled. Files exported by the user or archived into the selected local folder remain under the user's control.
+Users can pause live backup, disable local archiving in the workstation, delete one conversation, clear the local knowledge base, or uninstall the extension at any time. Delete and clear actions remove matching conversations from browser storage and the authorized local archive, but do not delete source files in regular external folders. Chrome removes extension-local storage when the extension is uninstalled. Exported files and local archive files are not deleted automatically by uninstalling and remain under the user's control.
 
 ## Chrome Web Store Limited Use
 
