@@ -2822,7 +2822,7 @@ function renderSelectedConversation(conversation) {
 
   elements.sourceBadge.className = `source-badge ${conversation.sourceType}`;
   elements.sourceBadge.textContent = conversation.sourceType === "folder"
-    ? tr("sourceFolder", { name: conversation.sourceLabel })
+    ? tr("sourceFolder", { name: getConversationSourceLabel(conversation) })
     : tr("browserStorage");
   elements.folderBadge.textContent = localizePlatformName(conversation.folderId || conversation.platform, conversation.folderLabel);
   elements.conversationTitle.textContent = conversation.title;
@@ -3951,6 +3951,13 @@ function buildConversationMeta(conversation) {
 function localizePlatformName(key, fallback) {
   const platform = PREFS.platformByKey?.(String(key || "").toLowerCase()) || PREFS.platformByKey?.(fallback);
   return platform ? PREFS.platformLabel(state.preferences, platform) : String(fallback || "");
+}
+
+function getConversationSourceLabel(conversation) {
+  if (isLocalArchiveConversation(conversation)) {
+    return tr("localArchiveTitle");
+  }
+  return cleanText(conversation?.sourceLabel || tr("folder"));
 }
 
 function looksLikeConversation(data) {

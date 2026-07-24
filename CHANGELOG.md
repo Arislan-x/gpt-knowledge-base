@@ -11,6 +11,7 @@
 - Deduplicated repeated copies of the same conversation across browser storage, local archive, and imports, keeping the newest version.
 - Fixed the right-side user-question progress rail so long conversations scroll inside the available space without exposing a scrollbar.
 - Added an "All" platform filter at the left of the platform filter row.
+- Fixed the English workstation source badge so local archive conversations display `Folder: Archive locally` instead of mixing English and Chinese.
 
 ## 1.3.7 - 2026-07-17
 

@@ -6,6 +6,8 @@
 
 导入功能也已升级：文件、ZIP、文件夹和 ChatGPT 官方导出导入后会默认写入已授权的本地归档；同一会话重复出现时保留更新时间最新的版本。长会话右侧问题进度条现在会在可用空间内滚动，左侧平台筛选新增“全部”入口。
 
+补充修复：英文工作站中的本地归档来源标签现已完整显示为 `Folder: Archive locally`，不再混用中文。
+
 ## 审核备注
 
 - 本次更新没有新增 Manifest 权限。
@@ -15,8 +17,8 @@
 
 ## 中文商店“新版变化”短文案
 
-新增“归档到本地”：浏览器备份和导入内容可写入用户授权的本地文件夹，并支持重新选择旧归档文件夹恢复。导入同一会话时保留最新版本。修复长会话右侧进度条越界问题，并新增“全部”平台筛选入口。
+新增“归档到本地”：浏览器备份和导入内容可写入用户授权的本地文件夹，并支持重新选择旧归档文件夹恢复。导入同一会话时保留最新版本。修复长会话右侧进度条越界与英文来源标签翻译不完整的问题，并新增“全部”平台筛选入口。
 
 ## English Update Notes
 
-Added Archive locally: browser backups and imports can be written to a user-authorized local folder, and selecting an existing archive folder can restore archived conversations. Imports now keep the latest version when the same conversation appears more than once. Long conversation progress navigation now scrolls within its available space, and the platform filter includes an All entry.
+Added Archive locally: browser backups and imports can be written to a user-authorized local folder, and selecting an existing archive folder can restore archived conversations. Imports now keep the latest version when the same conversation appears more than once. Long conversation progress navigation now scrolls within its available space, the platform filter includes an All entry, and the local archive source badge is now fully localized in English.
