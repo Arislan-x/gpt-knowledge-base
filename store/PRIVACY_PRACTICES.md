@@ -4,13 +4,13 @@ Use this document as the source of truth when filling out the Chrome Web Store *
 
 ## Single purpose
 
-Back up the AI conversation currently open by the user, store it locally, and provide one workstation for browsing, organizing, importing, and exporting those conversations as traceable knowledge and RAG source material.
+Back up the AI conversation currently open by the user, store it locally, and provide one workstation for browsing, organizing, importing, archiving to a user-authorized local folder, and exporting those conversations as traceable knowledge and RAG source material.
 
 ## Permission justifications
 
 ### `storage`
 
-Stores extension preferences, the local conversation index, and captured conversation content in `chrome.storage.local`.
+Stores extension preferences, the local conversation index, captured conversation content in `chrome.storage.local`, and the user's local-archive settings. When the user explicitly authorizes a local archive folder, conversation JSON files are also written to that folder through the browser's file-system picker.
 
 ### `unlimitedStorage`
 
@@ -18,7 +18,7 @@ Conversation archives can exceed the default extension storage quota, especially
 
 ### Content-script site access
 
-The extension runs content scripts only on the AI conversation sites listed in `manifest.json`. Access is required to read the DOM or same-origin current-conversation data of the open conversation and extract its title, message roles, order, text, citations, and source URL for the advertised live-backup feature. It does not scan unrelated sites, proactively read historical conversation lists, or transmit conversation data to developer servers.
+The extension runs content scripts only on the AI conversation sites listed in `manifest.json`. Access is required to read the DOM or same-origin current-conversation data of the open conversation and extract its title, message roles, order, text, citations, and source URL for the advertised live-backup feature. It does not scan unrelated sites, proactively read historical conversation lists, or transmit conversation data to developer servers. File, ZIP, folder import, and local archive folder access always require explicit user selection or authorization in the browser UI.
 
 ## Remote code
 

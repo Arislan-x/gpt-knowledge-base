@@ -1,5 +1,11 @@
 const INDEX_KEY = "cbv.index";
 const CONVERSATION_PREFIX = "cbv.conversation.";
+const LOCAL_ARCHIVE_SETTINGS_KEY = "cbv.localArchive.settings";
+const LOCAL_ARCHIVE_DB_NAME = "cbv.localArchive";
+const LOCAL_ARCHIVE_DB_VERSION = 1;
+const LOCAL_ARCHIVE_STORE_NAME = "handles";
+const LOCAL_ARCHIVE_DIRECTORY_KEY = "directory";
+const LOCAL_ARCHIVE_MODE = "readwrite";
 
 const PLATFORM_FOLDERS = [
   { key: "chatgpt", label: "ChatGPT", hosts: ["chatgpt.com", "chat.openai.com"] },
@@ -41,6 +47,20 @@ const elements = {
   fontSelect: document.querySelector("#fontSelect"),
   themeLabel: document.querySelector("#themeLabel"),
   themeSelect: document.querySelector("#themeSelect"),
+  settingsButton: document.querySelector("#settingsButton"),
+  settingsDialog: document.querySelector("#settingsDialog"),
+  settingsDialogTitle: document.querySelector("#settingsDialogTitle"),
+  closeSettingsDialogButton: document.querySelector("#closeSettingsDialogButton"),
+  localArchiveTitle: document.querySelector("#localArchiveTitle"),
+  localArchiveToggle: document.querySelector("#localArchiveToggle"),
+  localArchiveToggleLabel: document.querySelector("#localArchiveToggleLabel"),
+  localArchivePermissionLabel: document.querySelector("#localArchivePermissionLabel"),
+  localArchivePermissionStatus: document.querySelector("#localArchivePermissionStatus"),
+  localArchiveLocationLabel: document.querySelector("#localArchiveLocationLabel"),
+  localArchiveLocation: document.querySelector("#localArchiveLocation"),
+  chooseLocalArchiveButton: document.querySelector("#chooseLocalArchiveButton"),
+  localArchiveStatusHint: document.querySelector("#localArchiveStatusHint"),
+  localArchiveMeter: document.querySelector("#localArchiveMeter"),
   supportedPlatformsButton: document.querySelector("#supportedPlatformsButton"),
   importButton: document.querySelector("#importButton"),
   importDialog: document.querySelector("#importDialog"),
@@ -97,6 +117,7 @@ const elements = {
 
 const state = {
   localConversations: [],
+  localArchiveConversations: [],
   externalConversations: [],
   selectedKey: "",
   selectedFolder: "all",
@@ -109,13 +130,34 @@ const state = {
   externalFileCount: 0,
   externalAssetUrls: [],
   pendingConversationId: "",
-  preferences: { ...PREFS.DEFAULT_PREFERENCES }
+  preferences: { ...PREFS.DEFAULT_PREFERENCES },
+  localArchive: {
+    enabled: false,
+    directoryName: "",
+    directoryHandle: null,
+    permission: "unconfigured",
+    archivedIds: new Set(),
+    archived: 0,
+    total: 0,
+    syncing: false,
+    syncPending: false,
+    lastError: ""
+  }
 };
 
 document.addEventListener("DOMContentLoaded", initialize);
 elements.languageSelect.addEventListener("change", () => updatePreferences({ language: elements.languageSelect.value }));
 elements.fontSelect.addEventListener("change", () => updatePreferences({ font: elements.fontSelect.value }));
 elements.themeSelect.addEventListener("change", () => updatePreferences({ theme: elements.themeSelect.value }));
+elements.settingsButton.addEventListener("click", openSettingsDialog);
+elements.closeSettingsDialogButton.addEventListener("click", closeSettingsDialog);
+elements.settingsDialog.addEventListener("click", (event) => {
+  if (event.target === elements.settingsDialog) {
+    closeSettingsDialog();
+  }
+});
+elements.localArchiveToggle.addEventListener("change", () => setLocalArchiveEnabled(elements.localArchiveToggle.checked));
+elements.chooseLocalArchiveButton.addEventListener("click", chooseLocalArchiveFolder);
 elements.importButton.addEventListener("click", openImportDialog);
 elements.importZipButton.addEventListener("click", chooseZipFile);
 elements.importFilesButton.addEventListener("click", chooseBackupFiles);
@@ -156,17 +198,25 @@ window.addEventListener("pagehide", releaseExternalAssetUrls);
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === "local" && (changes[INDEX_KEY] || hasConversationChange(changes))) {
-    loadLocalConversations().then(() => render());
+    loadLocalConversations().then(async () => {
+      await syncLocalArchive();
+      render();
+    });
   }
   if (areaName === "local" && changes["cbv.preferences"]) {
     loadPreferencesAndRender();
+  }
+  if (areaName === "local" && changes[LOCAL_ARCHIVE_SETTINGS_KEY]) {
+    loadLocalArchiveState().then(() => render());
   }
 });
 
 async function initialize() {
   state.pendingConversationId = new URLSearchParams(location.search).get("conversation") || "";
   await loadPreferencesAndRender({ skipRender: true });
+  await loadLocalArchiveState();
   await loadLocalConversations();
+  await syncLocalArchive();
   render();
 }
 
@@ -220,6 +270,9 @@ function applyStaticText() {
   elements.supportedPlatformsButton.title = tr("supportedPlatforms");
   elements.supportedPlatformsButton.setAttribute("aria-label", tr("supportedPlatforms"));
   elements.supportedPlatformsButton.querySelector(".sr-only").textContent = tr("supportedPlatforms");
+  elements.settingsButton.title = tr("settingsDialogTitle");
+  elements.settingsButton.setAttribute("aria-label", tr("settingsDialogTitle"));
+  elements.settingsButton.querySelector(".sr-only").textContent = tr("settingsDialogTitle");
   elements.importButton.textContent = tr("importBackups");
   elements.exportButton.textContent = tr("exportBackups");
   elements.clearWorkspaceButton.textContent = tr("clearWorkspace");
@@ -244,6 +297,12 @@ function applyStaticText() {
   elements.cancelExportButton.textContent = tr("cancel");
   elements.confirmExportButton.textContent = tr("confirmExport");
   elements.closeExportDialogButton.setAttribute("aria-label", tr("close"));
+  elements.settingsDialogTitle.textContent = tr("settingsDialogTitle");
+  elements.closeSettingsDialogButton.setAttribute("aria-label", tr("close"));
+  elements.localArchiveTitle.textContent = tr("localArchiveTitle");
+  elements.localArchiveToggleLabel.textContent = tr("localArchiveToggle");
+  elements.localArchivePermissionLabel.textContent = tr("localArchivePermissionLabel");
+  elements.localArchiveLocationLabel.textContent = tr("localArchiveLocationLabel");
   elements.searchInput.placeholder = tr("searchBackups");
   elements.conversationCountLabel.textContent = tr("conversations");
   elements.messageCountLabel.textContent = tr("messages");
@@ -257,6 +316,7 @@ function applyStaticText() {
   elements.supportedPlatformsTitle.textContent = tr("supportedPlatforms");
   elements.trademarkNotice.textContent = tr("trademarkNotice");
   renderSupportedPlatforms();
+  updateLocalArchiveUi();
 }
 
 function setConversationActionLabel(button, tooltip, visibleLabel = "") {
@@ -275,6 +335,211 @@ function setConversationActionLabel(button, tooltip, visibleLabel = "") {
 function setTooltip(element, tooltip) {
   element.title = tooltip;
   element.setAttribute("aria-label", tooltip);
+}
+
+function openSettingsDialog() {
+  refreshLocalArchivePermission().then(() => {
+    updateLocalArchiveUi();
+    elements.settingsDialog.showModal();
+  });
+}
+
+function closeSettingsDialog() {
+  if (elements.settingsDialog.open) {
+    elements.settingsDialog.close();
+  }
+}
+
+async function loadLocalArchiveState() {
+  const stored = await chrome.storage.local.get(LOCAL_ARCHIVE_SETTINGS_KEY);
+  const settings = stored[LOCAL_ARCHIVE_SETTINGS_KEY] || {};
+  state.localArchive.enabled = settings.enabled === true;
+  state.localArchive.directoryName = cleanText(settings.directoryName || "");
+  state.localArchive.lastError = "";
+
+  if (!isLocalArchiveSupported()) {
+    state.localArchive.directoryHandle = null;
+    state.localArchive.permission = "unsupported";
+    updateLocalArchiveStats();
+    updateLocalArchiveUi();
+    return;
+  }
+
+  try {
+    state.localArchive.directoryHandle = await readLocalArchiveDirectoryHandle();
+  } catch (error) {
+    state.localArchive.directoryHandle = null;
+    state.localArchive.permission = "unknown";
+    state.localArchive.lastError = tr("localArchiveHandleRestoreFailed", { message: error?.message || error });
+    updateLocalArchiveStats();
+    updateLocalArchiveUi();
+    return;
+  }
+  if (state.localArchive.directoryHandle && !state.localArchive.directoryName) {
+    state.localArchive.directoryName = state.localArchive.directoryHandle.name || "";
+  }
+  await refreshLocalArchivePermission();
+  updateLocalArchiveStats();
+  updateLocalArchiveUi();
+}
+
+async function saveLocalArchiveSettings(patch = {}) {
+  const next = {
+    enabled: state.localArchive.enabled,
+    directoryName: state.localArchive.directoryName,
+    ...patch
+  };
+  state.localArchive.enabled = next.enabled === true;
+  state.localArchive.directoryName = cleanText(next.directoryName || "");
+  await chrome.storage.local.set({ [LOCAL_ARCHIVE_SETTINGS_KEY]: next });
+}
+
+function isLocalArchiveSupported() {
+  return "showDirectoryPicker" in window && "indexedDB" in window;
+}
+
+async function setLocalArchiveEnabled(enabled) {
+  if (!isLocalArchiveSupported()) {
+    state.localArchive.enabled = false;
+    state.localArchive.permission = "unsupported";
+    updateLocalArchiveUi();
+    return;
+  }
+
+  if (enabled && !state.localArchive.directoryHandle) {
+    await chooseLocalArchiveFolder();
+    return;
+  }
+
+  if (enabled) {
+    const permission = await requestLocalArchivePermission(state.localArchive.directoryHandle);
+    state.localArchive.permission = permission;
+    if (permission !== "granted") {
+      state.localArchive.enabled = false;
+      await saveLocalArchiveSettings({ enabled: false });
+      updateLocalArchiveUi();
+      return;
+    }
+  }
+
+  state.localArchive.enabled = enabled;
+  await saveLocalArchiveSettings({ enabled });
+  if (enabled) {
+    await syncLocalArchive();
+  }
+  render();
+}
+
+async function chooseLocalArchiveFolder() {
+  if (!isLocalArchiveSupported()) {
+    state.localArchive.permission = "unsupported";
+    updateLocalArchiveUi();
+    return;
+  }
+
+  try {
+    const handle = await window.showDirectoryPicker({ mode: LOCAL_ARCHIVE_MODE });
+    const permission = await requestLocalArchivePermission(handle);
+    state.localArchive.directoryHandle = handle;
+    state.localArchive.directoryName = handle.name || tr("folder");
+    state.localArchive.permission = permission;
+    state.localArchive.enabled = permission === "granted";
+    state.localArchive.lastError = "";
+    await storeLocalArchiveDirectoryHandle(handle);
+    await saveLocalArchiveSettings({
+      enabled: state.localArchive.enabled,
+      directoryName: state.localArchive.directoryName
+    });
+    if (state.localArchive.enabled) {
+      await loadLocalArchiveConversations();
+      await syncLocalArchive();
+    }
+    render();
+  } catch (error) {
+    if (error?.name !== "AbortError") {
+      state.localArchive.lastError = tr("localArchiveChooseFailed", { message: error?.message || error });
+      updateLocalArchiveUi();
+    } else {
+      elements.localArchiveToggle.checked = state.localArchive.enabled;
+    }
+  }
+}
+
+async function refreshLocalArchivePermission() {
+  if (!isLocalArchiveSupported()) {
+    state.localArchive.permission = "unsupported";
+    return state.localArchive.permission;
+  }
+  if (!state.localArchive.directoryHandle) {
+    state.localArchive.permission = "unconfigured";
+    return state.localArchive.permission;
+  }
+
+  try {
+    state.localArchive.permission = await queryLocalArchivePermission(state.localArchive.directoryHandle);
+  } catch {
+    state.localArchive.permission = "unknown";
+  }
+  return state.localArchive.permission;
+}
+
+async function queryLocalArchivePermission(handle) {
+  if (!handle?.queryPermission) {
+    return "granted";
+  }
+  return handle.queryPermission({ mode: LOCAL_ARCHIVE_MODE });
+}
+
+async function requestLocalArchivePermission(handle) {
+  if (!handle?.requestPermission) {
+    return "granted";
+  }
+  return handle.requestPermission({ mode: LOCAL_ARCHIVE_MODE });
+}
+
+async function openLocalArchiveDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(LOCAL_ARCHIVE_DB_NAME, LOCAL_ARCHIVE_DB_VERSION);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(LOCAL_ARCHIVE_STORE_NAME);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function readLocalArchiveDirectoryHandle() {
+  if (!isLocalArchiveSupported()) {
+    return null;
+  }
+  const db = await openLocalArchiveDb();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(LOCAL_ARCHIVE_STORE_NAME, "readonly");
+    const request = transaction.objectStore(LOCAL_ARCHIVE_STORE_NAME).get(LOCAL_ARCHIVE_DIRECTORY_KEY);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+    transaction.onerror = () => {
+      db.close();
+      reject(transaction.error);
+    };
+  });
+}
+
+async function storeLocalArchiveDirectoryHandle(handle) {
+  const db = await openLocalArchiveDb();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(LOCAL_ARCHIVE_STORE_NAME, "readwrite");
+    transaction.objectStore(LOCAL_ARCHIVE_STORE_NAME).put(handle, LOCAL_ARCHIVE_DIRECTORY_KEY);
+    transaction.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    transaction.onerror = () => {
+      db.close();
+      reject(transaction.error);
+    };
+  });
 }
 
 function openImportDialog() {
@@ -437,6 +702,445 @@ async function loadLocalConversations() {
     .filter(Boolean);
 }
 
+async function syncLocalArchive() {
+  updateLocalArchiveStats();
+  updateLocalArchiveUi();
+  if (state.localArchive.syncing) {
+    state.localArchive.syncPending = true;
+    return;
+  }
+
+  if (!state.localArchive.enabled || !state.localArchive.directoryHandle) {
+    return;
+  }
+
+  state.localArchive.syncing = true;
+  state.localArchive.syncPending = false;
+  state.localArchive.lastError = "";
+  updateLocalArchiveUi();
+
+  try {
+    const permission = await refreshLocalArchivePermission();
+    if (permission !== "granted") {
+      return;
+    }
+
+    await loadLocalArchiveConversations();
+    if (!state.localConversations.length) {
+      return;
+    }
+
+    const latestConversations = dedupeConversationsByLatest([
+      ...state.localArchiveConversations,
+      ...state.localConversations
+    ]);
+    const latestByKey = buildLatestConversationMap(latestConversations);
+    const archivedIds = new Set(state.localArchive.archivedIds);
+
+    for (const conversation of state.localConversations) {
+      const storageId = getConversationStorageId(conversation);
+      if (!storageId) {
+        continue;
+      }
+
+      archivedIds.add(storageId);
+      if (latestByKey.get(getConversationDedupKey(conversation)) !== conversation) {
+        continue;
+      }
+
+      await writeLocalArchiveConversation(conversation);
+    }
+
+    await writeLocalArchiveIndex(latestConversations);
+    state.localArchive.archivedIds = archivedIds;
+    updateLocalArchiveStats();
+  } catch (error) {
+    state.localArchive.lastError = tr("localArchiveWriteFailed", { message: error?.message || error });
+    if (error?.name === "NotAllowedError" || error?.name === "SecurityError") {
+      state.localArchive.permission = "denied";
+    }
+  } finally {
+    state.localArchive.syncing = false;
+    updateLocalArchiveUi();
+    if (state.localArchive.syncPending) {
+      await syncLocalArchive();
+    }
+  }
+}
+
+async function archiveImportedConversations(conversations) {
+  const imported = dedupeConversationsByLatest(conversations);
+  if (!imported.length || !state.localArchive.enabled) {
+    return false;
+  }
+
+  if (!state.localArchive.directoryHandle) {
+    await loadLocalArchiveState();
+  }
+
+  if (!state.localArchive.directoryHandle) {
+    return false;
+  }
+
+  if (state.localArchive.syncing) {
+    state.localArchive.syncPending = true;
+    return false;
+  }
+
+  state.localArchive.syncing = true;
+  state.localArchive.syncPending = false;
+  state.localArchive.lastError = "";
+  updateLocalArchiveUi();
+
+  try {
+    const permission = await requestLocalArchivePermission(state.localArchive.directoryHandle);
+    state.localArchive.permission = permission;
+    if (permission !== "granted") {
+      updateLocalArchiveUi();
+      return false;
+    }
+
+    await loadLocalArchiveConversations();
+    const latestConversations = dedupeConversationsByLatest([
+      ...state.localArchiveConversations,
+      ...state.localConversations,
+      ...imported
+    ]);
+    const importedKeys = new Set(imported.map(getConversationDedupKey).filter(Boolean));
+    let archivedCount = 0;
+
+    for (const conversation of latestConversations) {
+      const key = getConversationDedupKey(conversation);
+      if (!key || !importedKeys.has(key)) {
+        continue;
+      }
+
+      await writeLocalArchiveConversation(conversation);
+      archivedCount += 1;
+    }
+
+    await writeLocalArchiveIndex(latestConversations);
+    await loadLocalArchiveConversations();
+    state.localArchive.lastError = "";
+    updateLocalArchiveUi();
+    return archivedCount > 0 || importedKeys.size > 0;
+  } catch (error) {
+    state.localArchive.lastError = tr("localArchiveWriteFailed", { message: error?.message || error });
+    if (error?.name === "NotAllowedError" || error?.name === "SecurityError") {
+      state.localArchive.permission = "denied";
+    }
+    updateLocalArchiveUi();
+    return false;
+  } finally {
+    state.localArchive.syncing = false;
+    updateLocalArchiveUi();
+    if (state.localArchive.syncPending) {
+      await syncLocalArchive();
+    }
+  }
+}
+
+async function writeLocalArchiveConversation(conversation) {
+  const storageId = getConversationStorageId(conversation);
+  if (!storageId || !state.localArchive.directoryHandle) {
+    return null;
+  }
+
+  const folderLabel = localizePlatformName(
+    conversation.folderId || conversation.platform,
+    conversation.folderLabel || conversation.platformLabel || "Other"
+  ) || "Other";
+  const folderName = safeFileName(folderLabel);
+  const conversationsRoot = await state.localArchive.directoryHandle.getDirectoryHandle("conversations", { create: true });
+  const folderHandle = await conversationsRoot.getDirectoryHandle(folderName, { create: true });
+  const fileName = buildLocalArchiveFileName(conversation, storageId);
+  const relativePath = `conversations/${folderName}/${fileName}`;
+
+  await writeLocalArchiveTextFile(
+    folderHandle,
+    fileName,
+    JSON.stringify({
+      archivedAt: new Date().toISOString(),
+      archiveSource: "gpt-knowledge-base",
+      conversation
+    }, null, 2)
+  );
+
+  return buildLocalArchiveIndexEntry(conversation, relativePath);
+}
+
+async function writeLocalArchiveIndex(conversations) {
+  if (!state.localArchive.directoryHandle) {
+    return;
+  }
+
+  const indexEntries = dedupeConversationsByLatest(conversations)
+    .map((conversation) => buildLocalArchiveIndexEntry(conversation))
+    .filter(Boolean);
+
+  await writeLocalArchiveTextFile(
+    state.localArchive.directoryHandle,
+    "index.json",
+    JSON.stringify({
+      archivedAt: new Date().toISOString(),
+      source: "gpt-knowledge-base",
+      conversations: indexEntries
+    }, null, 2)
+  );
+}
+
+function buildLocalArchiveIndexEntry(conversation, relativePath = "") {
+  const storageId = getConversationStorageId(conversation);
+  if (!storageId) {
+    return null;
+  }
+
+  const folderLabel = localizePlatformName(
+    conversation.folderId || conversation.platform,
+    conversation.folderLabel || conversation.platformLabel || "Other"
+  ) || "Other";
+  const folderName = safeFileName(folderLabel);
+  const fileName = buildLocalArchiveFileName(conversation, storageId);
+
+  return {
+    id: storageId,
+    title: conversation.title || tr("untitledConversation"),
+    platform: conversation.platform,
+    platformLabel: localizePlatformName(conversation.platform, conversation.platformLabel || "Unknown"),
+    folder: conversation.folderId,
+    folderLabel,
+    updatedAt: conversation.updatedAt,
+    messageCount: conversation.messageCount,
+    path: relativePath || `conversations/${folderName}/${fileName}`
+  };
+}
+
+function buildLatestConversationMap(conversations) {
+  const map = new Map();
+  for (const conversation of conversations) {
+    const key = getConversationDedupKey(conversation);
+    if (!key) {
+      continue;
+    }
+    const current = map.get(key);
+    map.set(key, pickLatestConversation(current, conversation));
+  }
+  return map;
+}
+
+function dedupeConversationsByLatest(conversations) {
+  return Array.from(buildLatestConversationMap(conversations).values())
+    .sort(compareConversationsNewestFirst);
+}
+
+function pickLatestConversation(left, right) {
+  if (!left) {
+    return right;
+  }
+  if (!right) {
+    return left;
+  }
+  return compareConversationFreshness(left, right) >= 0 ? left : right;
+}
+
+function compareConversationsNewestFirst(left, right) {
+  return compareConversationFreshness(right, left);
+}
+
+function compareConversationFreshness(left, right) {
+  const timeDiff = conversationTimestamp(left) - conversationTimestamp(right);
+  if (timeDiff) {
+    return timeDiff;
+  }
+
+  const messageDiff = Number(left?.messageCount || 0) - Number(right?.messageCount || 0);
+  if (messageDiff) {
+    return messageDiff;
+  }
+
+  return conversationSourceRank(left) - conversationSourceRank(right);
+}
+
+function conversationTimestamp(conversation) {
+  const value = conversation?.updatedAt || conversation?.capturedAt || conversation?.createdAt || "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function conversationSourceRank(conversation) {
+  if (conversation?.sourceType === "browser") {
+    return 3;
+  }
+  if (isLocalArchiveConversation(conversation)) {
+    return 2;
+  }
+  return 1;
+}
+
+function getConversationDedupKey(conversation) {
+  const storageId = getConversationStorageId(conversation);
+  if (storageId) {
+    return `id:${storageId}`;
+  }
+  const sourceUrl = cleanText(conversation?.sourceUrl || "");
+  if (sourceUrl) {
+    return `url:${sourceUrl}`;
+  }
+  return cleanText(conversation?.viewerId || "");
+}
+
+function isLocalArchiveConversation(conversation) {
+  return conversation?.localArchiveSource === true ||
+    conversation?.sourceLabel === tr("localArchiveTitle") &&
+    String(conversation?.externalPath || "").startsWith("conversations/");
+}
+
+function markLocalArchiveConversation(conversation) {
+  if (!conversation || typeof conversation !== "object") {
+    return conversation;
+  }
+  Object.defineProperty(conversation, "localArchiveSource", {
+    value: true,
+    enumerable: false,
+    configurable: true
+  });
+  return conversation;
+}
+
+async function loadLocalArchiveConversations() {
+  if (!state.localArchive.directoryHandle) {
+    state.localArchiveConversations = [];
+    updateLocalArchiveStats();
+    return;
+  }
+
+  try {
+    const files = [];
+    await walkDirectory(state.localArchive.directoryHandle, "", files);
+    const result = await parseExternalFiles(files, tr("localArchiveTitle"));
+    state.localArchiveConversations = dedupeConversationsByLatest(result.conversations)
+      .map(markLocalArchiveConversation);
+    state.localArchive.archivedIds = new Set(
+      state.localArchiveConversations
+        .map(getConversationStorageId)
+        .filter(Boolean)
+    );
+    updateLocalArchiveStats();
+    updateLocalArchiveUi();
+  } catch (error) {
+    state.localArchive.lastError = tr("localArchiveReadFailed", { message: error?.message || error });
+    updateLocalArchiveUi();
+  }
+}
+
+async function writeLocalArchiveTextFile(directoryHandle, fileName, content) {
+  const fileHandle = await directoryHandle.getFileHandle(fileName, { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write(new Blob([content], { type: "application/json;charset=utf-8" }));
+  await writable.close();
+}
+
+function buildLocalArchiveFileName(conversation, storageId) {
+  const title = safeFileName(conversation.title || tr("untitledConversation"));
+  return `${hashString(storageId)}-${title}.json`;
+}
+
+function getConversationStorageId(conversation) {
+  return cleanText(conversation?.originalId || conversation?.id || conversation?.viewerId || "");
+}
+
+function updateLocalArchiveStats() {
+  const currentIds = new Set(state.localConversations.map(getConversationStorageId).filter(Boolean));
+  if (!currentIds.size && state.localArchive.archivedIds.size) {
+    state.localArchive.archived = state.localArchive.archivedIds.size;
+    state.localArchive.total = state.localArchive.archivedIds.size;
+    return;
+  }
+
+  let archived = 0;
+  for (const id of currentIds) {
+    if (state.localArchive.archivedIds.has(id)) {
+      archived += 1;
+    }
+  }
+  state.localArchive.archived = archived;
+  state.localArchive.total = currentIds.size;
+}
+
+function getLocalArchivePercent() {
+  if (!state.localArchive.total) {
+    return 0;
+  }
+  return Math.round((state.localArchive.archived / state.localArchive.total) * 100);
+}
+
+function updateLocalArchiveUi() {
+  updateLocalArchiveStats();
+  const percent = getLocalArchivePercent();
+  const hasProblem = state.localArchive.enabled &&
+    state.localArchive.permission !== "granted" &&
+    state.localArchive.total > 0;
+
+  elements.localArchiveToggle.checked = state.localArchive.enabled;
+  elements.localArchiveToggle.disabled = !isLocalArchiveSupported();
+  elements.chooseLocalArchiveButton.disabled = !isLocalArchiveSupported();
+  elements.chooseLocalArchiveButton.textContent = state.localArchive.directoryHandle
+    ? tr("changeLocalArchiveLocation")
+    : tr("chooseLocalArchiveLocation");
+  elements.localArchivePermissionStatus.textContent = getLocalArchivePermissionText(state.localArchive.permission);
+  elements.localArchiveLocation.textContent = state.localArchive.directoryName || tr("localArchiveNoLocation");
+  elements.localArchiveLocation.title = elements.localArchiveLocation.textContent;
+  elements.localArchiveStatusHint.textContent = getLocalArchiveHint();
+
+  elements.localArchiveMeter.textContent = tr("localArchiveMeter", { percent });
+  elements.localArchiveMeter.title = tr("localArchiveMeterTitle", {
+    archived: state.localArchive.archived,
+    total: state.localArchive.total
+  });
+  elements.localArchiveMeter.classList.toggle("is-disabled", !state.localArchive.enabled);
+  elements.localArchiveMeter.classList.toggle("is-warning", Boolean(hasProblem || state.localArchive.lastError));
+}
+
+function getLocalArchivePermissionText(permission) {
+  const key = {
+    unsupported: "localArchiveUnsupported",
+    unconfigured: "localArchiveUnconfigured",
+    granted: "localArchiveGranted",
+    prompt: "localArchivePrompt",
+    denied: "localArchiveDenied",
+    unknown: "localArchiveUnknown"
+  }[permission] || "localArchiveUnknown";
+  return tr(key);
+}
+
+function getLocalArchiveHint() {
+  if (state.localArchive.lastError) {
+    return state.localArchive.lastError;
+  }
+  if (!isLocalArchiveSupported()) {
+    return tr("localArchiveUnsupportedHint");
+  }
+  if (!state.localArchive.total) {
+    return tr("localArchiveNoBackups");
+  }
+  if (state.localArchive.syncing) {
+    return tr("localArchiveSyncing");
+  }
+  if (!state.localArchive.enabled) {
+    return tr("localArchiveDisabledHint");
+  }
+  if (!state.localArchive.directoryHandle) {
+    return tr("localArchiveNoLocationHint");
+  }
+  if (state.localArchive.permission !== "granted") {
+    return tr("localArchivePermissionHint");
+  }
+  return tr("localArchiveReady", {
+    archived: state.localArchive.archived,
+    total: state.localArchive.total
+  });
+}
+
 async function chooseExternalFolder() {
   if ("showDirectoryPicker" in window) {
     try {
@@ -462,8 +1166,11 @@ async function scanDirectoryHandle(handle) {
   state.externalFileCount = files.length;
   setStatus(tr("readingExternalBackup"));
   const result = await parseExternalFiles(files, state.externalFolderName);
-  replaceExternalAssetUrls(result.assetUrls);
-  state.externalConversations = result.conversations;
+  await applyImportedConversations(result, {
+    folderName: state.externalFolderName,
+    fileCount: files.length,
+    directoryHandle: handle
+  });
 }
 
 async function walkDirectory(directoryHandle, basePath, files) {
@@ -494,8 +1201,11 @@ async function handleFallbackFiles(event) {
   state.externalDirectoryHandle = null;
   setStatus(tr("readingExternalBackup"));
   const result = await parseExternalFiles(files, state.externalFolderName);
-  replaceExternalAssetUrls(result.assetUrls);
-  state.externalConversations = result.conversations;
+  await applyImportedConversations(result, {
+    folderName: state.externalFolderName,
+    fileCount: files.length,
+    directoryHandle: null
+  });
   event.target.value = "";
   render();
 }
@@ -524,8 +1234,11 @@ async function handleBackupFiles(event) {
   state.externalFolderName = sourceLabel;
   state.externalFileCount = files.length;
   state.externalDirectoryHandle = null;
-  replaceExternalAssetUrls(result.assetUrls);
-  state.externalConversations = result.conversations;
+  await applyImportedConversations(result, {
+    folderName: sourceLabel,
+    fileCount: files.length,
+    directoryHandle: null
+  });
   render();
 }
 
@@ -561,12 +1274,37 @@ async function handleZipFile(event) {
     state.externalFolderName = folderName;
     state.externalFileCount = files.length;
     state.externalDirectoryHandle = null;
-    replaceExternalAssetUrls(result.assetUrls);
-    state.externalConversations = result.conversations;
+    await applyImportedConversations(result, {
+      folderName,
+      fileCount: files.length,
+      directoryHandle: null
+    });
     render();
   } catch (error) {
     setStatus(tr("zipReadFailed", { message: error?.message || error }));
   }
+}
+
+async function applyImportedConversations(result, fallbackSource) {
+  const conversations = dedupeConversationsByLatest(result.conversations);
+  const archived = await archiveImportedConversations(conversations);
+
+  if (archived) {
+    revokeAssetUrls(result.assetUrls);
+    state.externalConversations = [];
+    state.externalFolderName = "";
+    state.externalFileCount = 0;
+    state.externalDirectoryHandle = null;
+    replaceExternalAssetUrls([]);
+    return true;
+  }
+
+  replaceExternalAssetUrls(result.assetUrls);
+  state.externalConversations = conversations;
+  state.externalFolderName = fallbackSource.folderName || "";
+  state.externalFileCount = fallbackSource.fileCount || 0;
+  state.externalDirectoryHandle = fallbackSource.directoryHandle || null;
+  return false;
 }
 
 function fileNameFromPath(value) {
@@ -640,7 +1378,10 @@ function parseJsonBackup(text, sourceMeta) {
   if (Array.isArray(data)) {
     rawConversations = data;
   } else if (Array.isArray(data?.conversations)) {
-    rawConversations = data.conversations;
+    rawConversations = data.conversations
+      .map((conversation) => looksLikeConversation(conversation?.conversation) ? conversation.conversation : conversation);
+  } else if (looksLikeConversation(data?.conversation)) {
+    rawConversations = [data.conversation];
   } else if (looksLikeConversation(data)) {
     rawConversations = [data];
   }
@@ -1842,6 +2583,7 @@ function render() {
   elements.statusText.textContent = buildStatusText(conversations);
   elements.exportButton.disabled = !conversations.length;
   elements.clearWorkspaceButton.disabled = !conversations.length;
+  updateLocalArchiveUi();
   elements.folderList.replaceChildren(...renderFolderButtons(conversations));
   elements.conversationList.replaceChildren(...renderConversationList(filtered));
   updateMultiSelectControls();
@@ -1850,8 +2592,15 @@ function render() {
 }
 
 function getCombinedConversations() {
-  return [...state.localConversations, ...state.externalConversations]
-    .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+  return dedupeConversationsByLatest([
+    ...state.localConversations,
+    ...state.localArchiveConversations,
+    ...state.externalConversations
+  ]);
+}
+
+function getVisibleLocalArchiveConversations() {
+  return getCombinedConversations().filter(isLocalArchiveConversation);
 }
 
 function filterConversations(conversations) {
@@ -1911,7 +2660,33 @@ function getSelectedConversation(filtered, all) {
 
 function renderFolderButtons(conversations) {
   const groups = groupByFolder(conversations);
-  return groups.map(renderFolderButton);
+  return [renderAllFolderButton(), ...groups.map(renderFolderButton)];
+}
+
+function renderAllFolderButton() {
+  const li = document.createElement("li");
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "folder-button all-folder-button";
+  if (state.selectedFolder === "all") {
+    button.classList.add("is-selected");
+  }
+
+  const label = tr("allBackups");
+  const icon = document.createElement("span");
+  icon.className = "platform-icon all-folder-icon";
+  icon.textContent = tr("allFilter");
+  button.title = label;
+  button.setAttribute("aria-label", label);
+
+  button.append(icon);
+  button.addEventListener("click", () => {
+    state.selectedFolder = "all";
+    state.selectedKey = "";
+    render();
+  });
+  li.append(button);
+  return li;
 }
 
 function renderFolderButton(folder) {
@@ -2363,6 +3138,7 @@ function updateUserProgressActive() {
 
   const containerTop = elements.messageList.getBoundingClientRect().top;
   let activeButton = buttons[0];
+  const previousActiveButton = buttons.find((button) => button.classList.contains("is-active"));
   let bestDistance = Number.POSITIVE_INFINITY;
 
   buttons.forEach((button) => {
@@ -2381,6 +3157,10 @@ function updateUserProgressActive() {
   buttons.forEach((button) => {
     button.classList.toggle("is-active", button === activeButton);
   });
+
+  if (activeButton !== previousActiveButton) {
+    activeButton.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
 }
 
 function getMessageAnchorId(message) {
@@ -3153,7 +3933,11 @@ function buildStatusText(conversations) {
   const externalText = state.externalConversations.length
     ? tr("externalStatus", { count: state.externalConversations.length, folder: state.externalFolderName })
     : "";
-  return tr("backupStatus", { local: state.localConversations.length, external: externalText });
+  const localArchiveConversations = getVisibleLocalArchiveConversations();
+  const archiveText = localArchiveConversations.length
+    ? tr("externalStatus", { count: localArchiveConversations.length, folder: tr("localArchiveTitle") })
+    : "";
+  return tr("backupStatus", { local: state.localConversations.length, external: `${archiveText}${externalText}` });
 }
 
 function buildConversationMeta(conversation) {

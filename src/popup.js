@@ -1,6 +1,12 @@
 const INDEX_KEY = "cbv.index";
 const CONVERSATION_PREFIX = "cbv.conversation.";
 const SETTINGS_KEY = "cbv.settings";
+const LOCAL_ARCHIVE_SETTINGS_KEY = "cbv.localArchive.settings";
+const LOCAL_ARCHIVE_DB_NAME = "cbv.localArchive";
+const LOCAL_ARCHIVE_DB_VERSION = 1;
+const LOCAL_ARCHIVE_STORE_NAME = "handles";
+const LOCAL_ARCHIVE_DIRECTORY_KEY = "directory";
+const LOCAL_ARCHIVE_MODE = "readwrite";
 
 const DEFAULT_SETTINGS = {
   autoCapture: true,
@@ -73,7 +79,15 @@ let state = {
   conversations: [],
   preferences: { ...PREFS.DEFAULT_PREFERENCES },
   settings: { ...DEFAULT_SETTINGS },
-  activeTab: null
+  activeTab: null,
+  localArchive: {
+    enabled: false,
+    directoryName: "",
+    directoryHandle: null,
+    permission: "unconfigured",
+    syncing: false,
+    syncPending: false
+  }
 };
 
 document.addEventListener("DOMContentLoaded", initialize);
@@ -90,7 +104,7 @@ elements.captureToggle.addEventListener("change", () => updateSettings({ autoCap
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === "local" && (changes[INDEX_KEY] || hasConversationChange(changes))) {
-    loadAndRender();
+    loadAndRender().then(() => queueLocalArchiveSync());
   }
   if (areaName === "local" && changes["cbv.preferences"]) {
     loadPreferencesAndRender();
@@ -98,12 +112,17 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === "local" && changes[SETTINGS_KEY]) {
     loadSettingsAndRender();
   }
+  if (areaName === "local" && changes[LOCAL_ARCHIVE_SETTINGS_KEY]) {
+    loadLocalArchiveState().then(() => queueLocalArchiveSync());
+  }
 });
 
 async function initialize() {
   await loadPreferencesAndRender({ skipRender: true });
   await loadSettingsAndRender({ skipRender: true });
   await loadAndRender();
+  await loadLocalArchiveState();
+  queueLocalArchiveSync();
 }
 
 async function loadPreferencesAndRender(options = {}) {
@@ -277,6 +296,184 @@ async function loadAndRender() {
   });
 
   render();
+}
+
+function queueLocalArchiveSync() {
+  syncLocalArchiveFromPopup().catch((error) => {
+    console.warn("Unable to archive from popup", error);
+  });
+}
+
+async function loadLocalArchiveState() {
+  const stored = await chrome.storage.local.get(LOCAL_ARCHIVE_SETTINGS_KEY);
+  const settings = stored[LOCAL_ARCHIVE_SETTINGS_KEY] || {};
+  state.localArchive.enabled = settings.enabled === true;
+  state.localArchive.directoryName = cleanText(settings.directoryName || "");
+  state.localArchive.directoryHandle = null;
+  state.localArchive.permission = "unconfigured";
+
+  if (!state.localArchive.enabled || !isLocalArchiveHandleStorageSupported()) {
+    return;
+  }
+
+  try {
+    state.localArchive.directoryHandle = await readLocalArchiveDirectoryHandle();
+    if (!state.localArchive.directoryHandle) {
+      return;
+    }
+    if (!state.localArchive.directoryName) {
+      state.localArchive.directoryName = state.localArchive.directoryHandle.name || "";
+    }
+    state.localArchive.permission = await queryLocalArchivePermission(state.localArchive.directoryHandle);
+  } catch (error) {
+    state.localArchive.directoryHandle = null;
+    state.localArchive.permission = "unknown";
+    console.warn("Unable to restore local archive folder in popup", error);
+  }
+}
+
+function isLocalArchiveHandleStorageSupported() {
+  return "indexedDB" in window;
+}
+
+async function syncLocalArchiveFromPopup() {
+  if (state.localArchive.syncing) {
+    state.localArchive.syncPending = true;
+    return;
+  }
+
+  if (!state.localArchive.enabled) {
+    return;
+  }
+
+  state.localArchive.syncing = true;
+  state.localArchive.syncPending = false;
+
+  try {
+    if (!state.localArchive.directoryHandle) {
+      await loadLocalArchiveState();
+    }
+
+    if (!state.localArchive.directoryHandle || !state.conversations.length) {
+      return;
+    }
+
+    const permission = await queryLocalArchivePermission(state.localArchive.directoryHandle);
+    state.localArchive.permission = permission;
+    if (permission !== "granted") {
+      return;
+    }
+
+    const conversationsRoot = await state.localArchive.directoryHandle.getDirectoryHandle("conversations", { create: true });
+    const indexEntries = [];
+
+    for (const conversation of state.conversations) {
+      const storageId = getConversationStorageId(conversation);
+      if (!storageId) {
+        continue;
+      }
+
+      const folderLabel = localizePlatformName(
+        conversation.folderId || conversation.platform,
+        conversation.folderLabel || conversation.platformLabel || "Other"
+      ) || "Other";
+      const folderName = safeFileName(folderLabel);
+      const folderHandle = await conversationsRoot.getDirectoryHandle(folderName, { create: true });
+      const fileName = buildLocalArchiveFileName(conversation, storageId);
+      const relativePath = `conversations/${folderName}/${fileName}`;
+
+      await writeLocalArchiveTextFile(
+        folderHandle,
+        fileName,
+        JSON.stringify({
+          archivedAt: new Date().toISOString(),
+          archiveSource: "gpt-knowledge-base",
+          conversation
+        }, null, 2)
+      );
+
+      indexEntries.push({
+        id: storageId,
+        title: conversation.title || tr("untitledConversation"),
+        platform: conversation.platform,
+        platformLabel: localizePlatformName(conversation.platform, conversation.platformLabel || "Unknown"),
+        folder: conversation.folderId,
+        folderLabel,
+        updatedAt: conversation.updatedAt,
+        messageCount: conversation.messageCount,
+        path: relativePath
+      });
+    }
+
+    await writeLocalArchiveTextFile(
+      state.localArchive.directoryHandle,
+      "index.json",
+      JSON.stringify({
+        archivedAt: new Date().toISOString(),
+        source: "gpt-knowledge-base",
+        conversations: indexEntries
+      }, null, 2)
+    );
+  } catch (error) {
+    if (error?.name === "NotAllowedError" || error?.name === "SecurityError") {
+      state.localArchive.permission = "denied";
+    }
+    console.warn("Unable to archive from popup", error);
+  } finally {
+    state.localArchive.syncing = false;
+    if (state.localArchive.syncPending) {
+      await syncLocalArchiveFromPopup();
+    }
+  }
+}
+
+async function queryLocalArchivePermission(handle) {
+  if (!handle?.queryPermission) {
+    return "granted";
+  }
+  return handle.queryPermission({ mode: LOCAL_ARCHIVE_MODE });
+}
+
+async function openLocalArchiveDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(LOCAL_ARCHIVE_DB_NAME, LOCAL_ARCHIVE_DB_VERSION);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(LOCAL_ARCHIVE_STORE_NAME);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function readLocalArchiveDirectoryHandle() {
+  const db = await openLocalArchiveDb();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(LOCAL_ARCHIVE_STORE_NAME, "readonly");
+    const request = transaction.objectStore(LOCAL_ARCHIVE_STORE_NAME).get(LOCAL_ARCHIVE_DIRECTORY_KEY);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+    transaction.onerror = () => {
+      db.close();
+      reject(transaction.error);
+    };
+  });
+}
+
+async function writeLocalArchiveTextFile(directoryHandle, fileName, content) {
+  const fileHandle = await directoryHandle.getFileHandle(fileName, { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write(new Blob([content], { type: "application/json;charset=utf-8" }));
+  await writable.close();
+}
+
+function buildLocalArchiveFileName(conversation, storageId) {
+  const title = safeFileName(conversation.title || tr("untitledConversation"));
+  return `${hashString(storageId)}-${title}.json`;
+}
+
+function getConversationStorageId(conversation) {
+  return cleanText(conversation?.originalId || conversation?.id || conversation?.localId || "");
 }
 
 function render() {

@@ -34,7 +34,7 @@
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-scrim" aria-hidden="true"></div>
         <div class="hero-copy">
-          <p class="eyebrow">Chrome Extension · Local First · GPL-3.0 · v1.3.7</p>
+          <p class="eyebrow">Chrome Extension · Local First · GPL-3.0 · v1.3.8</p>
           <h1 id="hero-title">GPT 知识库</h1>
           <p class="hero-lead">跨平台汇聚对话，构建 RAG 知识库</p>
           <p class="hero-description">
@@ -78,7 +78,7 @@
         <div class="checksum-note">
           <strong>SHA-256 校验是可选步骤</strong>
           <p>普通用户只下载 ZIP 即可安装；`.sha256` 不是安装文件。若希望验证下载完整性，请将两个文件放在同一文件夹并运行：</p>
-          <code>Get-FileHash .\gpt-knowledge-base-1.3.7.zip -Algorithm SHA256</code>
+          <code>Get-FileHash .\gpt-knowledge-base-1.3.8.zip -Algorithm SHA256</code>
           <p>将结果与 `.sha256` 文件中的值比较，一致即可继续安装；不一致时请重新下载。</p>
         </div>
       </section>
@@ -103,7 +103,7 @@
           <article>
             <span class="feature-index">03</span>
             <h3>统一知识工作站</h3>
-            <p>按平台聚合对话，合并浏览器备份与外部文件夹来源，并明确标记数据出处。</p>
+            <p>按平台聚合对话，合并浏览器备份、本地归档与外部来源，并明确标记数据出处。</p>
           </article>
           <article>
             <span class="feature-index">04</span>
@@ -125,7 +125,7 @@
           </li>
           <li>
             <span>2</span>
-            <div><h3>进入工作站</h3><p>统一浏览不同平台的备份，检查角色、顺序、格式与来源。</p></div>
+            <div><h3>进入工作站</h3><p>统一浏览不同平台的备份，检查角色、顺序、格式与来源，并可开启本地归档。</p></div>
           </li>
           <li>
             <span>3</span>
@@ -137,12 +137,12 @@
       <section class="section privacy-section" id="privacy">
         <div class="section-heading">
           <p class="eyebrow">Privacy by design</p>
-          <h2>数据留在你的浏览器</h2>
+          <h2>数据留在你的设备</h2>
         </div>
         <div class="privacy-copy">
           <p>插件只处理当前打开会话中已经呈现的对话信息，不主动抓取账号中的历史会话列表。</p>
-          <p>备份默认保存在本机浏览器存储中，不上传至开发者服务器，也不接入任何云端备份接口。</p>
-          <p>用户可以随时暂停实时备份、导出指定会话或清理本地数据。</p>
+          <p>备份默认保存在本机浏览器存储中；开启“归档到本地”后，也会写入用户授权的本地文件夹。</p>
+          <p>用户可以随时暂停实时备份、关闭本地归档、导出指定会话或清理本地数据。</p>
           <p>仅备份可识别的对话文本和结构；图片、视频、音频、附件及生成文件请用户自行下载保存。</p>
         </div>
       </section>

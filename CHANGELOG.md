@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 1.3.8 - 2026-07-24
+
+- Added "Archive locally" for syncing browser backups into a user-authorized local folder, with settings for enablement, permission status, and location.
+- Added an archive progress indicator in the workstation sidebar and automatic archive sync from both the workstation and popup.
+- Added recovery from an existing archive folder after extension removal, browser cache loss, or workstation reload.
+- Changed imports so file, ZIP, and folder imports are archived locally by default when local archiving is enabled.
+- Deduplicated repeated copies of the same conversation across browser storage, local archive, and imports, keeping the newest version.
+- Fixed the right-side user-question progress rail so long conversations scroll inside the available space without exposing a scrollbar.
+- Added an "All" platform filter at the left of the platform filter row.
+
 ## 1.3.7 - 2026-07-17
 
 - Fixed the popup incorrectly reporting that the current page had no backup across supported AI platforms after the `activeTab` permission was removed.

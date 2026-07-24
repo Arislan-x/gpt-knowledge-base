@@ -275,9 +275,38 @@ h1 {
 }
 
 #statusText {
+  min-width: 0;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.local-archive-meter {
+  flex: 0 0 auto;
+  margin-left: auto;
   margin-top: 2px;
   color: var(--muted);
   font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.local-archive-meter.is-disabled {
+  color: var(--muted);
+}
+
+.local-archive-meter.is-warning {
+  color: var(--danger);
 }
 
 .settings-toolbar {
@@ -320,7 +349,8 @@ h1 {
 }
 
 .icon-select,
-.platform-help-trigger {
+.platform-help-trigger,
+.settings-trigger {
   position: relative;
   display: grid;
   width: 36px;
@@ -334,13 +364,15 @@ h1 {
 
 .icon-select:hover,
 .platform-help-trigger:hover,
+.settings-trigger:hover,
 .platform-help:focus-within .platform-help-trigger {
   border-color: var(--accent);
   background: var(--accent-tint);
 }
 
 .icon-select svg,
-.platform-help-trigger svg {
+.platform-help-trigger svg,
+.settings-trigger svg {
   width: 18px;
   height: 18px;
   fill: none;
@@ -357,6 +389,10 @@ h1 {
 }
 
 .platform-help-trigger {
+  padding: 0;
+}
+
+.settings-trigger {
   padding: 0;
 }
 
@@ -434,7 +470,8 @@ h1 {
 }
 
 .export-dialog,
-.import-dialog {
+.import-dialog,
+.settings-dialog {
   width: min(520px, calc(100vw - 32px));
   max-width: none;
   max-height: calc(100vh - 32px);
@@ -446,13 +483,15 @@ h1 {
 }
 
 .export-dialog::backdrop,
-.import-dialog::backdrop {
+.import-dialog::backdrop,
+.settings-dialog::backdrop {
   background: rgba(23, 32, 37, 0.42);
   backdrop-filter: blur(2px);
 }
 
 .export-dialog-surface,
-.import-dialog-surface {
+.import-dialog-surface,
+.settings-dialog-surface {
   max-height: calc(100vh - 32px);
   overflow: auto;
   border: 1px solid var(--line);
@@ -463,7 +502,8 @@ h1 {
 }
 
 .export-dialog-header,
-.import-dialog-header {
+.import-dialog-header,
+.settings-dialog-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -479,7 +519,8 @@ h1 {
 }
 
 .export-dialog-header h2,
-.import-dialog-header h2 {
+.import-dialog-header h2,
+.settings-dialog-header h2 {
   margin: 0;
   font: 650 25px/1.2 var(--display-font);
 }
@@ -616,6 +657,86 @@ h1 {
 
 .export-dialog-actions button {
   min-width: 96px;
+}
+
+.settings-section-header {
+  padding-top: 20px;
+}
+
+.settings-section-header h3 {
+  font: 650 20px/1.25 var(--display-font);
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 8px 10px;
+  background: var(--panel);
+  cursor: pointer;
+}
+
+.toggle-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.toggle-row span {
+  font-weight: 750;
+}
+
+.settings-detail-list {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  margin: 14px 0 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--line);
+}
+
+.settings-detail-list div {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: var(--panel);
+}
+
+.settings-detail-list dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.settings-detail-list dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.settings-hint {
+  min-height: 20px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 @media (max-width: 520px) {
@@ -779,6 +900,12 @@ h1 {
 
 .folder-button .platform-logo {
   padding: 2px;
+}
+
+.folder-button .all-folder-icon {
+  background: var(--accent);
+  font-size: 10px;
+  letter-spacing: 0;
 }
 
 .conversation-panel {
@@ -1345,6 +1472,8 @@ h1 {
   top: 168px;
   right: 32px;
   bottom: 16px;
+  display: flex;
+  justify-content: flex-end;
   width: 36px;
   pointer-events: none;
 }
@@ -1354,17 +1483,34 @@ h1 {
   top: 18px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  max-height: calc(100vh - 150px);
-  pointer-events: auto;
+  align-items: flex-end;
+  flex: 0 0 min(304px, calc(100vw - 96px));
+  width: min(304px, calc(100vw - 96px));
+  height: 100%;
+  max-height: 100%;
+  pointer-events: none;
 }
 
 .user-progress-list {
   position: relative;
-  width: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 100%;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   list-style: none;
   margin: 0;
   padding: 8px 0;
+  pointer-events: none;
+}
+
+.user-progress-list::-webkit-scrollbar {
+  display: none;
 }
 
 .user-progress-list::before {
@@ -1372,7 +1518,7 @@ h1 {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
+  left: calc(100% - 16px);
   width: 2px;
   border-radius: 999px;
   background: var(--line);
@@ -1381,6 +1527,7 @@ h1 {
 
 .user-progress-list li {
   position: relative;
+  width: 32px;
   margin: 0 0 8px;
 }
 
@@ -1401,6 +1548,7 @@ h1 {
   padding: 0;
   line-height: 1;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  pointer-events: auto;
 }
 
 .user-progress-dot:hover,

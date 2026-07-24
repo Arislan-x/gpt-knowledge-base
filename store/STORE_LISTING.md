@@ -19,7 +19,9 @@ GPT 知识库把分散在不同 AI 对话平台中的当前会话保存到浏览
 - 实时备份当前打开的 AI 会话，不主动读取历史会话列表；
 - 按平台分组，在一个本地工作站中浏览和检索；
 - 区分用户、助手和思考内容，并尽量保持原始顺序与格式；
+- 开启“归档到本地”后，将浏览器备份同步到用户授权的本地文件夹；
 - 支持导入 JSON / Markdown 文件、本工具 ZIP 或文件夹备份，以及 ChatGPT 官方导出文件夹；
+- 导入内容可默认写入本地归档，同一会话重复出现时保留最新版本；
 - 支持单个会话或整个知识库导出为 JSON、Markdown、HTML 或 ZIP；
 - 所有会话数据默认只保存在用户设备上，不上传到开发者服务器。
 
@@ -52,7 +54,9 @@ Key capabilities:
 - Back up the currently open AI conversation in real time without proactively reading conversation history lists;
 - Group conversations by platform and browse them in one local workstation;
 - Distinguish user, assistant, and thinking content while preserving order and formatting where the source page permits;
+- Enable Archive locally to sync browser backups into a user-authorized local folder;
 - Import JSON or Markdown files, extension ZIP or folder backups, and official ChatGPT export folders;
+- Write imports to the local archive by default when enabled, keeping the latest version of repeated conversations;
 - Export one conversation or the complete knowledge base as JSON, Markdown, HTML, or ZIP;
 - Keep conversation data on the user's device by default, with no upload to developer servers.
 

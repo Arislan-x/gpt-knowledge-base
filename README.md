@@ -31,11 +31,12 @@ GPT 知识库是一个原创 Chrome Manifest V3 扩展，用于跨平台汇聚 A
 - 监听支持的 AI 对话页面。
 - 从页面 DOM 中捕获当前可见会话消息。
 - ChatGPT 可用时优先使用结构化 conversation JSON，以获得更可靠的角色与顺序。
-- 使用 `chrome.storage.local` 将实时捕获的会话永久保存在浏览器本地；外部文件、ZIP 和文件夹仅供当前工作站页面临时读取。
+- 使用 `chrome.storage.local` 将实时捕获的会话保存在浏览器本地；开启“归档到本地”后，可同步写入用户授权的本地文件夹。
 - 按平台自动分组，形成本地会话库。
 - 弹窗提供实时备份开关，可暂停当前会话继续备份。
 - 弹窗和完整库页支持中文 / 英文界面、开源字体栈、莫兰迪主题色。
-- 支持浏览器内置备份与用户手动选择的外部文件、ZIP、备份文件夹合并显示，并标记来源。
+- 支持浏览器内置备份、用户授权的本地归档、外部文件、ZIP、备份文件夹合并显示，并标记来源。
+- 支持将导入内容默认归档到本地；同一会话重复出现时保留最新版本。
 - 完整库页支持角色气泡、Markdown / 表格 / 代码块 / LaTeX 公式渲染、代码复制、思考折叠、用户问题跳转栏。
 - 支持单个会话导出 Markdown / JSON / HTML。
 - 支持会话多选，并将所选或全部会话合并导出 Markdown / JSON / HTML，或按会话导出 ZIP。
@@ -65,7 +66,7 @@ GPT 知识库是一个原创 Chrome Manifest V3 扩展，用于跨平台汇聚 A
 - 智谱清言 / Qingyan: `chatglm.cn`, `*.chatglm.cn`, `z.ai`, `*.z.ai`
 - Hugging Face Chat: `huggingface.co/chat`, `hf.co/chat`
 
-这些分组是浏览器扩展储存中的逻辑分组，不是操作系统文件夹。
+工作站中的平台分组是浏览器扩展储存中的逻辑分组；开启“归档到本地”后，授权的归档文件夹中也会按平台生成对应目录。
 
 ## 安装方式
 
@@ -90,8 +91,8 @@ GPT 知识库是一个原创 Chrome Manifest V3 扩展，用于跨平台汇聚 A
 `.sha256` 不是安装文件，只用于确认 ZIP 下载完整、未发生意外损坏。**普通用户可以只下载 ZIP 并直接解压安装；校验不是必需步骤。** 如果希望校验，请把 ZIP 和 `.sha256` 放在同一文件夹，在该文件夹打开 PowerShell：
 
 ```powershell
-$expected = (Get-Content .\gpt-knowledge-base-1.3.7.zip.sha256).Split()[0].ToLower()
-$actual = (Get-FileHash .\gpt-knowledge-base-1.3.7.zip -Algorithm SHA256).Hash.ToLower()
+$expected = (Get-Content .\gpt-knowledge-base-1.3.8.zip.sha256).Split()[0].ToLower()
+$actual = (Get-FileHash .\gpt-knowledge-base-1.3.8.zip -Algorithm SHA256).Hash.ToLower()
 $actual -eq $expected
 ```
 
@@ -101,13 +102,13 @@ $actual -eq $expected
 Linux 可以运行：
 
 ```bash
-sha256sum -c gpt-knowledge-base-1.3.7.zip.sha256
+sha256sum -c gpt-knowledge-base-1.3.8.zip.sha256
 ```
 
 macOS 可以运行：
 
 ```bash
-shasum -a 256 -c gpt-knowledge-base-1.3.7.zip.sha256
+shasum -a 256 -c gpt-knowledge-base-1.3.8.zip.sha256
 ```
 
 公开产品介绍页：[https://arislan-x.github.io/gpt-knowledge-base/](https://arislan-x.github.io/gpt-knowledge-base/)。
@@ -138,20 +139,21 @@ shasum -a 256 -c gpt-knowledge-base-1.3.7.zip.sha256
 - 对 ChatGPT 官方导出，工作站会合并读取 `conversations.json` 或 `conversations-000.json` 等分片，沿当前分支还原用户、助手和思考消息。
 - `conversation_asset_file_names.json` 会用于恢复 `.dat` 附件的原始文件名与类型；导出目录中仍存在的图片可以预览，PDF、文档等附件可以从消息卡片打开。
 - **大型 ChatGPT 官方导出应先解压，再使用“文件夹”导入并选择最外层导出目录；不建议直接导入数 GB 的 ZIP。** ZIP 导入设有防止浏览器内存耗尽的安全上限。
-- 浏览器内置备份和外部文件夹备份会合并显示。
-- 每个会话都会标记为 `浏览器储存` 或 `文件夹` 来源。
+- 如果已开启并授权“归档到本地”，导入内容会默认写入本地归档文件夹；同一会话重复出现时保留最新版本。
+- 浏览器内置备份、本地归档和外部文件夹备份会合并显示。
+- 每个会话都会标记为 `浏览器储存`、`归档到本地` 或 `文件夹` 来源。
 
-> **持久化说明：** 外部文件、ZIP 和文件夹仅供当前工作站页面临时读取，不会复制进扩展的浏览器永久储存。刷新、关闭工作站或重启浏览器后，需要重新选择对应文件、ZIP 或文件夹。电脑中的原文件不会被修改；插件实时捕获的会话仍会正常永久保存在浏览器储存中。
+> **持久化说明：** 开启并授权“归档到本地”后，工作站和插件弹窗都会尝试把浏览器备份同步到用户选择的本地文件夹，导入内容也会默认写入该归档。未配置本地归档时，外部文件、ZIP 和文件夹仍只供当前工作站页面临时读取。电脑中的原始导入文件不会被修改；归档 JSON 是插件在授权文件夹中创建或覆盖的副本。
 
 > **附件说明：** `.dat` 解析只读取用户主动选择的 ChatGPT 官方导出目录。附件本身不会被复制进浏览器储存，也不会被嵌入 JSON、Markdown 或 HTML 知识库导出；离开工作站后仍应保留原始 ChatGPT 导出文件夹。
 
-Chrome 不允许扩展静默读取任意本地路径，所以外部文件、ZIP 和文件夹都必须由用户主动授权选择。导入内容只按备份数据读取，不会执行其中的代码。
+Chrome 不允许扩展静默读取任意本地路径，所以外部文件、ZIP、文件夹和本地归档位置都必须由用户主动授权选择。导入内容只按备份数据读取，不会执行其中的代码。
 
 ## 隐私模型
 
-数据默认保存在本机浏览器配置文件中。本扩展不会上传对话内容到任何云端接口。
+数据默认保存在本机浏览器配置文件中；用户开启“归档到本地”后，也会保存在用户授权的本地文件夹中。本扩展不会上传对话内容到任何云端接口。
 
-扩展只备份当前打开会话中的对话信息，不会主动抓取历史会话列表。外部文件夹也只有在用户手动选择后才会被读取。
+扩展只备份当前打开会话中的对话信息，不会主动抓取历史会话列表。外部文件夹和本地归档文件夹也只有在用户手动选择或授权后才会被读取。
 
 完整的数据处理和权限说明见[隐私政策](PRIVACY.md)。
 
