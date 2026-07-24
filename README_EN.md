@@ -6,6 +6,12 @@
 
 > Unify AI conversations into a RAG knowledge base
 
+## Product Demo
+
+[![Watch the GPT Knowledge Base v1.3.8 English demo](https://img.youtube.com/vi/7l7YAmvcEK0/maxresdefault.jpg)](https://www.youtube.com/watch?v=7l7YAmvcEK0)
+
+[Watch the GPT Knowledge Base v1.3.8 English demo on YouTube](https://www.youtube.com/watch?v=7l7YAmvcEK0)
+
 GPT Knowledge Base is an original Chrome Manifest V3 extension that collects conversations across AI platforms. It helps users select valuable conversations and organize them into local, traceable knowledge assets prepared for RAG retrieval.
 
 Live backup is the capture layer, not the final product. The current version provides the data foundation for **cross-platform capture, conversation browsing, source merging, selection, and export**. Future versions will build chunking, indexing, retrieval, and RAG knowledge-base generation on top of these structured conversations.

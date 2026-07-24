@@ -8,6 +8,12 @@
 >
 > Unify AI conversations into a RAG knowledge base
 
+## 产品演示
+
+[![观看 GPT 知识库 v1.3.8 中文演示视频](https://img.youtube.com/vi/ym8PjmwrF-4/maxresdefault.jpg)](https://www.youtube.com/watch?v=ym8PjmwrF-4)
+
+[在 YouTube 观看 GPT 知识库 v1.3.8 中文演示](https://www.youtube.com/watch?v=ym8PjmwrF-4)
+
 GPT 知识库是一个原创 Chrome Manifest V3 扩展，用于跨平台汇聚 AI 对话，让用户选择真正有价值的会话，并将它们整理为本地、可追溯、面向 RAG 检索的知识资产。
 
 实时备份是知识采集入口，不是产品终点。当前版本已完成 **跨平台采集、会话浏览、来源合并、选择与导出** 这一数据层；后续版本将在这些结构化会话之上继续实现分块、索引、检索和 RAG 知识库生成。

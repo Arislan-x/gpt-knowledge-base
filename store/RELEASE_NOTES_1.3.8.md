@@ -35,3 +35,8 @@
 4. 刷新已打开的 AI 会话页面，使新版内容脚本生效。
 
 Chrome Web Store 更新包与 GitHub Release 中的 `gpt-knowledge-base-1.3.8.zip` 使用相同代码。
+
+## 产品演示
+
+- [中文演示视频](https://www.youtube.com/watch?v=ym8PjmwrF-4)
+- [English demo video](https://www.youtube.com/watch?v=7l7YAmvcEK0)
