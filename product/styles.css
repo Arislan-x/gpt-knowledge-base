@@ -333,6 +333,18 @@ footer { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(50px, 9vw,
   line-height: 1.7;
 }
 
+.billing-surface .billing-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 24px 0 0;
+  font-size: 13px;
+}
+
+.billing-legal a {
+  color: var(--accent-strong);
+}
+
 .billing-surface #billing-status {
   min-height: 28px;
   color: #1f292d;

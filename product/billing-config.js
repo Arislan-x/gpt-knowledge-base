@@ -1,4 +1,4 @@
 window.GPTKB_BILLING_CONFIG = Object.freeze({
-  environment: "sandbox",
-  clientToken: "test_7d9072be3fc2b1cb451d344f938"
+  environment: "live",
+  clientToken: "live_90e4e1d90a25bad26d8b6197cb6"
 });
