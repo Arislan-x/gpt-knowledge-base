@@ -423,3 +423,117 @@ footer { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(50px, 9vw,
     text-align: center;
   }
 }
+
+/* Cloud account password reset */
+.auth-page {
+  min-height: 100vh;
+  background: #eef3f4;
+}
+
+.auth-header {
+  position: static;
+  grid-template-columns: 1fr;
+  border-bottom: 1px solid #d4dde1;
+  background: #fbfefe;
+}
+
+.auth-main {
+  display: grid;
+  min-height: calc(100vh - 73px);
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-surface {
+  width: min(440px, 100%);
+  border: 1px solid #d4dde1;
+  border-radius: 8px;
+  padding: 32px;
+  background: #fbfefe;
+  box-shadow: 0 20px 56px rgba(31, 41, 45, 0.12);
+}
+
+.auth-surface h1 {
+  margin: 4px 0 10px;
+  color: #1f292d;
+  font-size: 32px;
+  letter-spacing: 0;
+}
+
+.auth-surface > p {
+  color: #65737a;
+}
+
+.auth-surface form {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.auth-surface form[hidden] {
+  display: none;
+}
+
+.auth-surface label {
+  margin-top: 6px;
+  color: #33464f;
+  font-weight: 700;
+}
+
+.auth-surface input,
+.auth-surface button {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.auth-surface input {
+  border: 1px solid #afc0c5;
+  padding: 0 12px;
+  background: #fff;
+  color: #1f292d;
+}
+
+.auth-surface button {
+  margin-top: 12px;
+  border: 1px solid #294a59;
+  background: #294a59;
+  color: #fff;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.auth-surface button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.auth-status {
+  min-height: 28px;
+  margin: 18px 0 0;
+  color: #2f6d4f;
+  font-weight: 700;
+}
+
+.auth-status.is-error {
+  color: #9c4b45;
+}
+
+.auth-return {
+  display: inline-block;
+  margin-top: 10px;
+  color: #47616d;
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .auth-main {
+    align-items: start;
+    padding: 16px;
+  }
+
+  .auth-surface {
+    padding: 24px 18px;
+  }
+}
