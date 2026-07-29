@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="GPT 知识库是一款跨平台 AI 对话实时备份与 RAG 知识整理工具。">
+    <title>GPT 知识库 - 跨平台汇聚对话，构建 RAG 知识库</title>
+    <link rel="icon" href="../assets/icons/icon32.png" sizes="32x32">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="返回页首">
+        <img src="../assets/gpt-knowledge-base-icon.svg" alt="" width="40" height="40">
+        <span>GPT 知识库</span>
+      </a>
+      <nav aria-label="页面导航">
+        <a href="#demo">演示</a>
+        <a href="#install">安装</a>
+        <a href="#capabilities">能力</a>
+        <a href="#workflow">流程</a>
+        <a href="#privacy">隐私</a>
+        <a href="#compatibility">兼容平台</a>
+      </nav>
+      <div class="header-tools">
+        <div class="language-switch" aria-label="切换语言">
+          <a href="./#top" lang="en">EN</a>
+          <a class="is-active" href="index-zh.html#top" lang="zh-CN" aria-current="page">中文</a>
+        </div>
+        <a class="header-action" href="https://github.com/Arislan-x/gpt-knowledge-base/releases/latest">GitHub 下载</a>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-scrim" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <p class="eyebrow">Chrome Extension · Local First · GPL-3.0 · v1.3.8</p>
+          <h1 id="hero-title">GPT 知识库</h1>
+          <p class="hero-lead">跨平台汇聚对话，构建 RAG 知识库</p>
+          <p class="hero-description">
+            自动备份当前打开的 AI 会话，在本地工作站中忠实浏览、筛选和导出，让散落在不同平台的高价值对话成为可持续使用的个人知识资产。
+          </p>
+          <div class="hero-actions">
+            <a class="primary-action" href="https://github.com/Arislan-x/gpt-knowledge-base/releases/latest">GitHub 离线安装</a>
+            <a class="secondary-action" href="https://chromewebstore.google.com/detail/gpt-%E7%9F%A5%E8%AF%86%E5%BA%93/edjcpeckhehobbjalbkgblcghgiecmjd">Chrome 商店 · 立即安装</a>
+            <a class="secondary-action" href="#demo">观看中文演示</a>
+          </div>
+          <p class="release-note">项目依据 GNU GPL v3.0 开源，现已在 Chrome Web Store 正式上架。</p>
+        </div>
+      </section>
+
+      <section class="proof-strip" aria-label="产品特性摘要">
+        <div><strong>14</strong><span>个 AI 平台</span></div>
+        <div><strong>实时</strong><span>当前会话备份</span></div>
+        <div><strong>本地</strong><span>浏览器内存储</span></div>
+        <div><strong>GPL-3.0</strong><span>公开源码与可持续分发</span></div>
+      </section>
+
+      <section class="section demo-section" id="demo">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Product demo · v1.3.8</p>
+            <h2>一分钟了解完整工作流</h2>
+          </div>
+          <p>从插件弹窗、实时备份和本地归档，到导入、筛选、多选与导出，快速了解 GPT 知识库如何整理跨平台 AI 对话。</p>
+        </div>
+        <div class="video-frame">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/ym8PjmwrF-4"
+            title="GPT 知识库 v1.3.8 中文产品演示"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
+        </div>
+        <p class="video-link"><a href="https://www.youtube.com/watch?v=ym8PjmwrF-4">在 YouTube 中打开中文演示视频</a></p>
+      </section>
+
+      <section class="section install-section" id="install">
+        <div class="section-heading compact">
+          <p class="eyebrow">Installation</p>
+          <h2>两种安装方式</h2>
+          <p>无论从 GitHub 离线安装，还是通过 Chrome 商店安装，扩展功能与 GPL-3.0 许可保持一致。</p>
+        </div>
+        <div class="install-grid">
+          <article>
+            <span class="install-status is-ready">立即可用</span>
+            <h3>GitHub Release 离线安装</h3>
+            <p>下载最新 ZIP；如有需要可同时下载 `.sha256` 做完整性校验。解压后在 Chrome 扩展管理页使用“加载已解压的扩展程序”。</p>
+            <a class="primary-action" href="https://github.com/Arislan-x/gpt-knowledge-base/releases/latest">下载最新 Release</a>
+          </article>
+          <article>
+            <span class="install-status is-ready">已正式上架</span>
+            <h3>Chrome Web Store</h3>
+            <p>从官方商店一键安装，由 Chrome 管理后续版本更新，无需手动下载或重新加载扩展。</p>
+            <a class="secondary-action" href="https://chromewebstore.google.com/detail/gpt-%E7%9F%A5%E8%AF%86%E5%BA%93/edjcpeckhehobbjalbkgblcghgiecmjd">从 Chrome 商店安装</a>
+          </article>
+        </div>
+        <div class="checksum-note">
+          <strong>SHA-256 校验是可选步骤</strong>
+          <p>普通用户只下载 ZIP 即可安装；`.sha256` 不是安装文件。若希望验证下载完整性，请将两个文件放在同一文件夹并运行：</p>
+          <code>Get-FileHash .\gpt-knowledge-base-1.3.8.zip -Algorithm SHA256</code>
+          <p>将结果与 `.sha256` 文件中的值比较，一致即可继续安装；不一致时请重新下载。</p>
+        </div>
+      </section>
+
+      <section class="section" id="capabilities">
+        <div class="section-heading">
+          <p class="eyebrow">Product capabilities</p>
+          <h2>从对话备份到知识资产</h2>
+          <p>不是简单保存网页文本，而是保留角色、顺序和内容结构，为后续检索、整理与 RAG 使用准备可靠数据。</p>
+        </div>
+        <div class="feature-grid">
+          <article>
+            <span class="feature-index">01</span>
+            <h3>跨平台实时捕获</h3>
+            <p>访问受支持的 AI 会话页面后自动更新当前对话，不主动读取历史会话列表。</p>
+          </article>
+          <article>
+            <span class="feature-index">02</span>
+            <h3>高保真本地浏览</h3>
+            <p>区分用户、助手和思考内容，支持 Markdown、代码块、表格、引用与 LaTeX 公式。</p>
+          </article>
+          <article>
+            <span class="feature-index">03</span>
+            <h3>统一知识工作站</h3>
+            <p>按平台聚合对话，合并浏览器备份、本地归档与外部来源，并明确标记数据出处。</p>
+          </article>
+          <article>
+            <span class="feature-index">04</span>
+            <h3>面向 RAG 的导出</h3>
+            <p>单会话或批量导出 JSON、Markdown 和 HTML，也可打包为 ZIP 供后续知识库流水线使用。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section-muted" id="workflow">
+        <div class="section-heading compact">
+          <p class="eyebrow">Workflow</p>
+          <h2>三个步骤完成知识汇聚</h2>
+        </div>
+        <ol class="workflow-list">
+          <li>
+            <span>1</span>
+            <div><h3>打开会话</h3><p>插件识别当前 AI 平台和会话，持续保存页面中已加载的对话内容。</p></div>
+          </li>
+          <li>
+            <span>2</span>
+            <div><h3>进入工作站</h3><p>统一浏览不同平台的备份，检查角色、顺序、格式与来源，并可开启本地归档。</p></div>
+          </li>
+          <li>
+            <span>3</span>
+            <div><h3>选择并导出</h3><p>挑选真正有价值的会话，导出为可追溯的 RAG 知识资料。</p></div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="section privacy-section" id="privacy">
+        <div class="section-heading">
+          <p class="eyebrow">Privacy by design</p>
+          <h2>数据留在你的设备</h2>
+        </div>
+        <div class="privacy-copy">
+          <p>插件只处理当前打开会话中已经呈现的对话信息，不主动抓取账号中的历史会话列表。</p>
+          <p>备份默认保存在本机浏览器存储中；开启“归档到本地”后，也会写入用户授权的本地文件夹。</p>
+          <p>用户可以随时暂停实时备份、关闭本地归档、导出指定会话或清理本地数据。</p>
+          <p>仅备份可识别的对话文本和结构；图片、视频、音频、附件及生成文件请用户自行下载保存。</p>
+        </div>
+      </section>
+
+      <section class="section compatibility-section" id="compatibility">
+        <div class="section-heading compact">
+          <p class="eyebrow">Compatibility</p>
+          <h2>支持的 AI 服务</h2>
+          <p>点击标识可前往相应服务官网。</p>
+        </div>
+        <div class="brand-grid">
+          <a href="https://chatgpt.com/" title="打开 ChatGPT 官网"><img src="../assets/brand/chatgpt.png" alt="ChatGPT"><span>ChatGPT</span></a>
+          <a href="https://claude.ai/" title="打开 Claude 官网"><img src="../assets/brand/claude.png" alt="Claude"><span>Claude</span></a>
+          <a href="https://grok.com/" title="打开 Grok 官网"><img src="../assets/brand/grok.png" alt="Grok"><span>Grok</span></a>
+          <a href="https://chat.deepseek.com/" title="打开 DeepSeek 官网"><img src="../assets/brand/deepseek.ico" alt="DeepSeek"><span>DeepSeek</span></a>
+          <a href="https://www.kimi.com/" title="打开 Kimi 官网"><img src="../assets/brand/kimi.ico" alt="Kimi"><span>Kimi</span></a>
+          <a href="https://gemini.google.com/" title="打开 Gemini 官网"><img src="../assets/brand/gemini.svg" alt="Gemini"><span>Gemini</span></a>
+          <a href="https://www.perplexity.ai/" title="打开 Perplexity 官网"><img src="../assets/brand/perplexity.ico" alt="Perplexity"><span>Perplexity</span></a>
+          <a href="https://poe.com/" title="打开 Poe 官网"><img src="../assets/brand/poe.ico" alt="Poe"><span>Poe</span></a>
+          <a href="https://www.qianwen.com/chat/" title="打开千问官网"><img src="../assets/brand/qwen.png" alt="千问"><span>千问</span></a>
+          <a href="https://www.doubao.com/chat/" title="打开豆包官网"><img src="../assets/brand/doubao.png" alt="豆包"><span>豆包</span></a>
+          <a href="https://yuanbao.tencent.com/" title="打开腾讯元宝官网"><img src="../assets/brand/yuanbao.ico" alt="腾讯元宝"><span>腾讯元宝</span></a>
+          <a href="https://chat.baidu.com/" title="打开文心一言官网"><img src="../assets/brand/wenxin.png" alt="文心一言"><span>文心一言</span></a>
+          <a href="https://chatglm.cn/" title="打开智谱清言官网"><img src="../assets/brand/zhipu.png" alt="智谱清言"><span>智谱清言</span></a>
+          <a href="https://huggingface.co/chat/" title="打开 Hugging Face 官网"><img src="../assets/brand/huggingface.svg" alt="Hugging Face"><span>Hugging Face</span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-brand">
+        <img src="../assets/gpt-knowledge-base-icon.svg" alt="" width="36" height="36">
+        <div><strong>GPT 知识库</strong><span>跨平台汇聚对话，构建 RAG 知识库</span></div>
+      </div>
+      <div class="legal">
+        <p>Copyright © 2026 Arislan-x.</p>
+        <p>原创代码和文档依据 GNU General Public License v3.0 开源；分发修改版时须继续遵守 GPL-3.0。</p>
+        <p>第三方名称和标识仅用于说明兼容性，相关商标归各权利人所有。本项目并非相关平台的官方产品，亦未经其赞助、认可、授权或关联。</p>
+        <p class="legal-links"><a href="https://github.com/Arislan-x/gpt-knowledge-base">源代码</a><a href="https://github.com/Arislan-x/gpt-knowledge-base/blob/main/LICENSE">GPL-3.0</a><a href="privacy.html">隐私政策</a></p>
+      </div>
+    </footer>
+  </body>
+</html>

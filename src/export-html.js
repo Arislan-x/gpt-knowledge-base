@@ -4,7 +4,7 @@
   const ROLE_CLASSES = new Set(["user", "assistant", "thinking", "tool", "system", "unknown"]);
 
   function conversationToHtml(conversation, options = {}) {
-    const language = options.language === "en" ? "en" : "zh";
+    const language = options.language === "zh" ? "zh" : "en";
     const copy = language === "zh"
       ? {
           platform: "平台",
@@ -79,7 +79,7 @@ ${messageHtml}
   }
 
   function conversationsToHtml(conversations, options = {}) {
-    const language = options.language === "en" ? "en" : "zh";
+    const language = options.language === "zh" ? "zh" : "en";
     const copy = language === "zh"
       ? { title: "GPT 知识库导出", conversations: "个会话", messages: "条消息", platform: "平台", source: "来源", captured: "末次备份", unknown: "未知" }
       : { title: "GPT Knowledge Base Export", conversations: "conversations", messages: "messages", platform: "Platform", source: "Source", captured: "Last backup", unknown: "Unknown" };

@@ -1,61 +1,59 @@
-# GPT 知识库
+# GPT Knowledge Base
 
-[简体中文](README.md) | [English](README_EN.md) | [产品网站](https://arislan-x.github.io/gpt-knowledge-base/) | [隐私政策](PRIVACY.md) | [GPL-3.0 许可](LICENSE)
+[English](README.md) | [简体中文](README_ZH.md) | [Product Website](https://arislan-x.github.io/gpt-knowledge-base/) | [Privacy Policy](PRIVACY_EN.md) | [GPL-3.0 License](LICENSE)
 
-**开源许可：GNU General Public License v3.0**
+**Open-source license: GNU General Public License v3.0**
 
-> 跨平台汇聚对话，构建 RAG 知识库
->
 > Unify AI conversations into a RAG knowledge base
 
-## 产品演示
+## Product Demo
 
-[![观看 GPT 知识库 v1.3.8 中文演示视频](https://img.youtube.com/vi/ym8PjmwrF-4/maxresdefault.jpg)](https://www.youtube.com/watch?v=ym8PjmwrF-4)
+[![Watch the GPT Knowledge Base v1.3.8 English demo](https://img.youtube.com/vi/7l7YAmvcEK0/maxresdefault.jpg)](https://www.youtube.com/watch?v=7l7YAmvcEK0)
 
-[在 YouTube 观看 GPT 知识库 v1.3.8 中文演示](https://www.youtube.com/watch?v=ym8PjmwrF-4)
+[Watch the GPT Knowledge Base v1.3.8 English demo on YouTube](https://www.youtube.com/watch?v=7l7YAmvcEK0)
 
-GPT 知识库是一个原创 Chrome Manifest V3 扩展，用于跨平台汇聚 AI 对话，让用户选择真正有价值的会话，并将它们整理为本地、可追溯、面向 RAG 检索的知识资产。
+GPT Knowledge Base is an original Chrome Manifest V3 extension that collects conversations across AI platforms. It helps users select valuable conversations and organize them into local, traceable knowledge assets prepared for RAG retrieval.
 
-实时备份是知识采集入口，不是产品终点。当前版本已完成 **跨平台采集、会话浏览、来源合并、选择与导出** 这一数据层；后续版本将在这些结构化会话之上继续实现分块、索引、检索和 RAG 知识库生成。
+Live backup is the capture layer, not the final product. The current version provides the data foundation for **cross-platform capture, conversation browsing, source merging, selection, and export**. Future versions will build chunking, indexing, retrieval, and RAG knowledge-base generation on top of these structured conversations.
 
-## 产品定位
+## Product Positioning
 
-核心工作流：
+Core workflow:
 
-1. 打开 ChatGPT、Claude、DeepSeek、Kimi、豆包等 AI 对话页面。
-2. 插件实时采集当前打开会话中的对话内容。
-3. 不同平台的会话自动进入各自的本地分组。
-4. 在 GPT 知识库中选择需要沉淀的会话。
-5. 将精选会话清洗、组织并接入 RAG 知识库流程；当前版本可导出 JSON / Markdown / HTML 作为结构化数据来源。
+1. Open a conversation in ChatGPT, Claude, DeepSeek, Kimi, Doubao, or another supported platform.
+2. The extension captures messages from the currently open conversation in real time.
+3. Conversations from different platforms are stored in separate local groups.
+4. Select the conversations worth preserving in GPT Knowledge Base.
+5. Clean and organize the selected conversations for a RAG workflow. The current version exports JSON, Markdown, and HTML as structured source data.
 
-一句话定位：
+In one sentence:
 
-> 选择跨平台 AI 会话，将它们沉淀为本地、可追溯的 RAG 知识库。
+> Select conversations across AI platforms and turn them into a local, traceable RAG knowledge base.
 
-## 当前功能
+## Current Features
 
-- 监听支持的 AI 对话页面。
-- 从页面 DOM 中捕获当前可见会话消息。
-- ChatGPT 可用时优先使用结构化 conversation JSON，以获得更可靠的角色与顺序。
-- 使用 `chrome.storage.local` 将实时捕获的会话保存在浏览器本地；开启“归档到本地”后，可同步写入用户授权的本地文件夹。
-- 按平台自动分组，形成本地会话库。
-- 弹窗提供实时备份开关，可暂停当前会话继续备份。
-- 弹窗和完整库页支持中文 / 英文界面、开源字体栈、莫兰迪主题色。
-- 支持浏览器内置备份、用户授权的本地归档、外部文件、ZIP、备份文件夹合并显示，并标记来源。
-- 支持将导入内容默认归档到本地；同一会话重复出现时保留最新版本。
-- 完整库页支持角色气泡、Markdown / 表格 / 代码块 / LaTeX 公式渲染、代码复制、思考折叠、用户问题跳转栏。
-- 支持单个会话导出 Markdown / JSON / HTML。
-- 支持会话多选，并将所选或全部会话合并导出 Markdown / JSON / HTML，或按会话导出 ZIP。
-- 支持删除单个、所选或全部会话，并同步从浏览器储存和用户授权的本地归档中删除；普通外部文件夹中的原文件不会被删除。
-- 支持的平台名称和可用官方图标会链接到各自官网；这些商标和图标仅作指示性使用。
+- Monitors supported AI conversation pages.
+- Captures messages from the currently open conversation DOM.
+- Uses structured conversation JSON for ChatGPT when available, improving role and message-order accuracy.
+- Stores live-captured conversations in `chrome.storage.local`; when Archive locally is enabled, it can also sync them into a user-authorized local folder.
+- Automatically groups conversations by platform.
+- Provides a live-backup switch in the popup so capture can be paused for the current browsing session.
+- Supports Chinese and English interfaces, open-source font stacks, and Morandi-inspired themes.
+- Combines browser backups, the user-authorized local archive, external files, ZIP archives, and backup folders while clearly marking each source.
+- Archives imports locally by default when Archive locally is enabled; repeated copies of the same conversation keep the latest version.
+- Renders role-based bubbles, Markdown, tables, code blocks, LaTeX formulas, copyable code, collapsed thinking, and user-question navigation in the workstation.
+- Exports individual conversations as Markdown, JSON, or HTML.
+- Supports conversation multi-selection and exports selected or all conversations as merged Markdown, JSON, or HTML, or as a per-conversation ZIP archive.
+- Deletes individual, selected, or all conversations from both browser storage and the user-authorized local archive without deleting source files in regular external folders.
+- Links supported platform names and available official logos to their respective websites for nominative reference only.
 
-## 备份范围与限制
+## Backup Scope and Limitations
 
-> **重要：** 本扩展仅备份会话中可识别的文本信息和内容结构，不会下载或保存会话中的图片、视频、音频、上传附件、模型生成文件及其二进制内容。备份中即使保留了文件名、链接或说明文字，也不代表对应资源文件已经备份。请使用原平台提供的下载功能，及时自行保存这些资源。
+> **Important:** This extension backs up recognizable conversation text and content structure only. It does not download or preserve images, videos, audio, uploaded attachments, model-generated files, or their binary contents. A retained filename, link, or description does not mean that the corresponding resource file has been backed up. Use the original platform's download function to save these resources separately.
 
-## 支持的平台
+## Supported Platforms
 
-当前会为以下平台创建独立的逻辑分组：
+The extension creates a separate logical group for each supported platform:
 
 - ChatGPT: `chatgpt.com`, `chat.openai.com`
 - Claude: `claude.ai`, `claude.com`
@@ -65,36 +63,36 @@ GPT 知识库是一个原创 Chrome Manifest V3 扩展，用于跨平台汇聚 A
 - Gemini: `gemini.google.com`
 - Perplexity: `perplexity.ai`, `www.perplexity.ai`
 - Poe: `poe.com`, `www.poe.com`
-- 千问 / Qwen: `chat.qwen.ai`, `qianwen.com`, `www.qianwen.com`
-- 豆包 / Doubao: `doubao.com`, `www.doubao.com`
-- 腾讯元宝 / Yuanbao: `yuanbao.tencent.com`
-- 文心一言 / Yiyan: `chat.baidu.com`, `yiyan.baidu.com`, `wenxin.baidu.com`
-- 智谱清言 / Qingyan: `chatglm.cn`, `*.chatglm.cn`, `z.ai`, `*.z.ai`
+- Qwen: `chat.qwen.ai`, `qianwen.com`, `www.qianwen.com`
+- Doubao: `doubao.com`, `www.doubao.com`
+- Yuanbao: `yuanbao.tencent.com`
+- Yiyan: `chat.baidu.com`, `yiyan.baidu.com`, `wenxin.baidu.com`
+- Qingyan: `chatglm.cn`, `*.chatglm.cn`, `z.ai`, `*.z.ai`
 - Hugging Face Chat: `huggingface.co/chat`, `hf.co/chat`
 
-工作站中的平台分组是浏览器扩展储存中的逻辑分组；开启“归档到本地”后，授权的归档文件夹中也会按平台生成对应目录。
+These are logical groups inside extension storage. When Archive locally is enabled, the authorized archive folder also contains matching per-platform directories.
 
-## 安装方式
+## Installation Methods
 
-本扩展提供两种安装方式：
+The extension supports two installation methods:
 
-### 方式一：Chrome Web Store
+### Method 1: Chrome Web Store
 
-[从 Chrome Web Store 安装 GPT 知识库](https://chromewebstore.google.com/detail/gpt-%E7%9F%A5%E8%AF%86%E5%BA%93/edjcpeckhehobbjalbkgblcghgiecmjd)，即可获得一键安装和 Chrome 管理的自动更新。商店版与 GitHub 公开源码使用相同的 GPL-3.0 许可。
+[Install GPT Knowledge Base from the Chrome Web Store](https://chromewebstore.google.com/detail/gpt-%E7%9F%A5%E8%AF%86%E5%BA%93/edjcpeckhehobbjalbkgblcghgiecmjd) for one-click installation and Chrome-managed updates. The store build and the public GitHub source use the same GPL-3.0 license.
 
-### 方式二：GitHub Release 离线安装
+### Method 2: Offline Installation from GitHub Releases
 
-1. 在公开仓库的 [Releases](https://github.com/Arislan-x/gpt-knowledge-base/releases/latest) 页面下载最新的 `gpt-knowledge-base-*.zip` 和 `.sha256` 文件。
-2. 可选择先做 SHA-256 完整性校验，然后将 ZIP 完整解压到固定文件夹；Chrome 不能直接加载 ZIP。
-3. 打开 Chrome，进入 `chrome://extensions`。
-4. 开启开发者模式。
-5. 点击“加载已解压的扩展程序”，选择刚才的解压目录。
-6. 打开或刷新一个受支持的 AI 对话页面。
-7. 点击扩展图标，查看实时备份状态并进入工作站。
+1. Download the latest `gpt-knowledge-base-*.zip` and `.sha256` files from the public repository's [Releases](https://github.com/Arislan-x/gpt-knowledge-base/releases/latest) page.
+2. Optionally verify the SHA-256 value, then fully extract the ZIP to a stable folder. Chrome cannot load the ZIP directly.
+3. Open `chrome://extensions` in Chrome.
+4. Enable **Developer mode**.
+5. Select **Load unpacked** and choose the extracted directory.
+6. Open or refresh a supported AI conversation page.
+7. Select the extension icon to review backup status and open the workstation.
 
-#### SHA-256 完整性校验（可选）
+#### Optional SHA-256 Integrity Check
 
-`.sha256` 不是安装文件，只用于确认 ZIP 下载完整、未发生意外损坏。**普通用户可以只下载 ZIP 并直接解压安装；校验不是必需步骤。** 如果希望校验，请把 ZIP 和 `.sha256` 放在同一文件夹，在该文件夹打开 PowerShell：
+The `.sha256` file is not an installer. It only verifies that the ZIP was downloaded intact. **Most users can download the ZIP alone and install it without performing this optional check.** To verify on Windows, place the ZIP and `.sha256` file in the same folder and run PowerShell there:
 
 ```powershell
 $expected = (Get-Content .\gpt-knowledge-base-1.3.8.zip.sha256).Split()[0].ToLower()
@@ -102,87 +100,87 @@ $actual = (Get-FileHash .\gpt-knowledge-base-1.3.8.zip -Algorithm SHA256).Hash.T
 $actual -eq $expected
 ```
 
-- 返回 `True`：校验通过，可以继续解压安装。
-- 返回 `False`：不要安装，删除两个文件后从 GitHub Release 重新下载。
+- `True`: verification passed; continue with extraction and installation.
+- `False`: do not install; delete both files and download them again from GitHub Releases.
 
-Linux 可以运行：
+On Linux, run:
 
 ```bash
 sha256sum -c gpt-knowledge-base-1.3.8.zip.sha256
 ```
 
-macOS 可以运行：
+On macOS, run:
 
 ```bash
 shasum -a 256 -c gpt-knowledge-base-1.3.8.zip.sha256
 ```
 
-公开产品介绍页：[https://arislan-x.github.io/gpt-knowledge-base/](https://arislan-x.github.io/gpt-knowledge-base/)。
+Public product website: [https://arislan-x.github.io/gpt-knowledge-base/](https://arislan-x.github.io/gpt-knowledge-base/).
 
-## 源码开发安装
+## Development Installation
 
-1. 打开 Chrome，进入 `chrome://extensions`。
-2. 开启 `Developer mode`。
-3. 点击 `Load unpacked`。
-4. 选择本目录：`gpt-knowledge-base`。
-5. 打开或刷新一个受支持的 AI 对话页面。
-6. 点击扩展图标，查看实时备份状态。
-7. 点击 `打开工作站 / Open Workstation` 进入完整工作站页面。
+1. Open Chrome and navigate to `chrome://extensions`.
+2. Enable **Developer mode**.
+3. Click **Load unpacked**.
+4. Select the `gpt-knowledge-base` directory.
+5. Open or refresh a supported AI conversation page.
+6. Click the extension icon to check live-backup status.
+7. Click **Open Workstation** to open the full conversation workstation.
 
-## 导入外部备份
+## Import External Backups
 
-工作站提供 `文件`、`ZIP`、`文件夹` 三种导入入口，且都必须由用户主动选择：
+The workstation provides three explicitly user-selected import options: **Files**, **ZIP**, and **Folder**.
 
-1. **单个或多个文件：** 可直接选择一个或多个 `.json`、`.md`、`.markdown` 文件。
-2. **本工具导出的备份：** 支持重新导入本工具生成的 ZIP，也支持导入解压后的备份文件夹。
-3. **ChatGPT 官方导出：** 支持包含会话 JSON 分片和 `.dat` 附件的完整导出文件夹。
+1. **One or more files:** directly select one or more `.json`, `.md`, or `.markdown` files.
+2. **Backups exported by this extension:** re-import the generated ZIP or its extracted folder.
+3. **Official ChatGPT exports:** import the complete folder containing conversation JSON shards and `.dat` assets.
 
-- 点击 `打开工作站`。
-- 点击 `导入`，在弹窗中选择 `文件`、`ZIP` 或 `文件夹`。
-- `文件`支持一次选择一个或多个 JSON、MD、Markdown 备份文件。
-- ZIP 支持本工具导出的备份包，以及使用 Store / Deflate 压缩、内含 `.json`、`.md` 或 `.markdown` 的常见压缩包。
-- 文件夹模式支持本工具导出的解压目录、普通 `.json` / `.md` / `.markdown` 备份目录，以及 ChatGPT 官方导出的完整目录。
-- 对 ChatGPT 官方导出，工作站会合并读取 `conversations.json` 或 `conversations-000.json` 等分片，沿当前分支还原用户、助手和思考消息。
-- `conversation_asset_file_names.json` 会用于恢复 `.dat` 附件的原始文件名与类型；导出目录中仍存在的图片可以预览，PDF、文档等附件可以从消息卡片打开。
-- **大型 ChatGPT 官方导出应先解压，再使用“文件夹”导入并选择最外层导出目录；不建议直接导入数 GB 的 ZIP。** ZIP 导入设有防止浏览器内存耗尽的安全上限。
-- 如果已开启并授权“归档到本地”，导入内容会默认写入本地归档文件夹；同一会话重复出现时保留最新版本。
-- 浏览器内置备份、本地归档和外部文件夹备份会合并显示。
-- 每个会话都会标记为 `浏览器储存`、`归档到本地` 或 `文件夹` 来源。
+- Open the workstation.
+- Click **Import**, then choose **Files**, **ZIP**, or **Folder** in the dialog.
+- **Files** accepts one or more JSON, MD, or Markdown backup files in one selection.
+- ZIP import supports archives exported by this extension and common Store/Deflate ZIP files containing `.json`, `.md`, or `.markdown` backups.
+- Folder import supports an extracted export from this extension, ordinary `.json` / `.md` / `.markdown` backup directories, and complete official ChatGPT export directories.
+- For an official ChatGPT export, the workstation merges `conversations.json` or sharded files such as `conversations-000.json`, then follows the active branch to reconstruct user, assistant, and thinking messages.
+- `conversation_asset_file_names.json` restores the original names and types of `.dat` assets. Images that are still present can be previewed, while PDFs and other documents can be opened from attachment cards.
+- **Extract large official ChatGPT exports first, then use Folder import and select the top-level export directory. Direct import of a multi-gigabyte ZIP is not recommended.** ZIP import has defensive browser-memory limits.
+- If Archive locally is enabled and authorized, imported conversations are written to the local archive folder by default; repeated copies of the same conversation keep the latest version.
+- Browser-stored, locally archived, and folder-based backups are displayed together.
+- Every conversation is marked as coming from browser storage, Archive locally, or a folder.
 
-> **持久化说明：** 开启并授权“归档到本地”后，工作站和插件弹窗都会尝试把浏览器备份同步到用户选择的本地文件夹，导入内容也会默认写入该归档。未配置本地归档时，外部文件、ZIP 和文件夹仍只供当前工作站页面临时读取。电脑中的原始导入文件不会被修改；归档 JSON 是插件在授权文件夹中创建或覆盖的副本。
+> **Persistence notice:** After Archive locally is enabled and authorized, the workstation and popup both try to sync browser backups into the user-selected local folder, and imports are written there by default. Without a configured local archive, external file, ZIP, and folder imports remain temporary for the current workstation session. Original imported files on the computer are not modified; archive JSON files are copies created or overwritten inside the authorized folder.
 
-> **附件说明：** `.dat` 解析只读取用户主动选择的 ChatGPT 官方导出目录。附件本身不会被复制进浏览器储存，也不会被嵌入 JSON、Markdown 或 HTML 知识库导出；离开工作站后仍应保留原始 ChatGPT 导出文件夹。
+> **Asset notice:** `.dat` parsing only reads an official ChatGPT export directory explicitly selected by the user. Asset binaries are not copied into browser storage or embedded in JSON, Markdown, or HTML knowledge-base exports. Keep the original ChatGPT export folder after leaving the workstation.
 
-Chrome 不允许扩展静默读取任意本地路径，所以外部文件、ZIP、文件夹和本地归档位置都必须由用户主动授权选择。导入内容只按备份数据读取，不会执行其中的代码。
+Chrome extensions cannot silently access arbitrary local paths. The user must explicitly select and authorize external files, ZIP archives, folders, and the local archive location. Imported content is read only as backup data; code inside it is not executed.
 
-## 隐私模型
+## Privacy Model
 
-数据默认保存在本机浏览器配置文件中；用户开启“归档到本地”后，也会保存在用户授权的本地文件夹中。本扩展不会上传对话内容到任何云端接口。
+Data is stored in the local browser profile by default. When Archive locally is enabled, it is also stored in the user-authorized local folder. The extension does not upload conversation content to any cloud endpoint.
 
-扩展只备份当前打开会话中的对话信息，不会主动抓取历史会话列表。外部文件夹和本地归档文件夹也只有在用户手动选择或授权后才会被读取。
+Only the currently open conversation is backed up. The extension does not proactively fetch historical conversation lists. External folders and the local archive folder are read only after the user explicitly selects or authorizes them.
 
-完整的数据处理和权限说明见[隐私政策](PRIVACY.md)。
+See the [Privacy Policy](PRIVACY_EN.md) for the complete data-handling and permission disclosures.
 
-## RAG 知识库方向
+## RAG Knowledge-Base Direction
 
-这个项目的主线不是单纯保存备份，而是把跨平台 AI 对话变成可复用知识资产。
+This project is not limited to preserving backups. Its main direction is turning cross-platform AI conversations into reusable knowledge assets.
 
-后续 RAG 层建议基于当前结构继续实现：
+Planned RAG-layer capabilities include:
 
-- 会话多选与集合管理。
-- 自动清洗无关 UI 文本、重复回答和临时思考片段。
-- 生成知识库条目、元数据和来源链接。
-- 分块、去重、标签、摘要和向量化导出。
-- 对接本地或自定义 RAG 工具链。
+- Multi-conversation selection and collection management.
+- Automatic removal of unrelated UI text, duplicate answers, and temporary reasoning fragments.
+- Knowledge entries with metadata and source links.
+- Chunking, deduplication, tagging, summaries, and vector-ready exports.
+- Integration with local or user-defined RAG toolchains.
 
-## 商标和品牌声明
+## Trademark and Brand Notice
 
-本项目不是 OpenAI、Anthropic、xAI、DeepSeek、Moonshot AI、Google、Perplexity AI、Quora、Alibaba Cloud、ByteDance、Tencent、Baidu、Zhipu AI、Hugging Face 或其他支持平台的官方产品，也未获得其赞助、背书或合作授权。
+This project is not an official product of, sponsored by, endorsed by, or affiliated with OpenAI, Anthropic, xAI, DeepSeek, Moonshot AI, Google, Perplexity AI, Quora, Alibaba Cloud, ByteDance, Tencent, Baidu, Zhipu AI, Hugging Face, or any other supported platform.
 
-所有产品名称、Logo、图标、商标和品牌标识均归各自所有者所有。本项目仅将这些名称和图标作为指示性链接使用，用于说明支持的网站和跳转到对应官网。如果某个平台的品牌规范要求不同处理，发布者应在发布前替换或移除相关图标。
+All product names, logos, icons, trademarks, and brand assets belong to their respective owners. This project uses names and icons only as nominative links to identify supported websites and open their official pages. Publishers should replace or remove an asset before release if a platform's brand guidelines require different handling.
 
-## 版权与许可
+## Copyright and License
 
 Copyright © 2026 Arislan-x.
 
-本项目原创代码和文档依据 **GNU General Public License v3.0（GPL-3.0）** 开源。你可以使用、研究、修改和再分发本项目；如果分发修改版或衍生版，必须继续依照 GPL-3.0 提供对应源码和许可声明。完整条款见 [`LICENSE`](LICENSE)。第三方组件仍适用其各自许可证；第三方平台名称、Logo 和商标归各自权利人所有，不因本项目采用 GPL-3.0 而改变权属。
+The project's original code and documentation are open source under the **GNU General Public License v3.0 (GPL-3.0)**. You may use, study, modify, and redistribute the project. If you distribute a modified or derivative version, you must continue to provide the corresponding source and license notices under GPL-3.0. See [`LICENSE`](LICENSE) for the complete terms. Third-party components retain their own licenses; third-party platform names, logos, and trademarks remain the property of their respective owners and are not relicensed by GPL-3.0.

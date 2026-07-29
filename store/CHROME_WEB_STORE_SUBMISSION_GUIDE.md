@@ -73,7 +73,7 @@ Public、Unlisted 和 Private 都需要经过相同政策审核。正式发布�
 
 <https://chromewebstore.google.com/detail/gpt-%E7%9F%A5%E8%AF%86%E5%BA%93/edjcpeckhehobbjalbkgblcghgiecmjd>
 
-正式商品链接已同步至 `README.md`、`README_EN.md`、产品网站和 Release 说明。后续上传更新时必须提高 `manifest.json` 的版本号，并上传包含全部文件的新 ZIP。
+正式商品链接已同步至英文主文档 `README.md`、中文文档 `README_ZH.md`、产品网站和 Release 说明。后续上传更新时必须提高 `manifest.json` 的版本号，并上传包含全部文件的新 ZIP。
 
 ## 官方参考
 
