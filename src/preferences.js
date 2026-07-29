@@ -2,14 +2,14 @@
   const PREF_KEY = "cbv.preferences";
 
   const DEFAULT_PREFERENCES = {
-    language: "zh",
+    language: "en",
     theme: "mist",
     font: "serif"
   };
 
   const LANGUAGE_OPTIONS = [
-    { key: "zh", label: "中文", labelEn: "Chinese" },
-    { key: "en", label: "English", labelEn: "English" }
+    { key: "en", label: "English", labelEn: "English" },
+    { key: "zh", label: "中文", labelEn: "Chinese" }
   ];
 
   const THEME_OPTIONS = [

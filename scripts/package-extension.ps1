@@ -36,6 +36,7 @@ $runtimeRoots = @(
   (Join-Path $root "PRIVACY_EN.md"),
   (Join-Path $root "README.md"),
   (Join-Path $root "README_EN.md"),
+  (Join-Path $root "README_ZH.md"),
   (Join-Path $root "_locales"),
   (Join-Path $root "assets"),
   (Join-Path $root "src")
